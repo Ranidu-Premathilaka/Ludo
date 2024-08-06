@@ -545,6 +545,7 @@ as shown below.
             }
     }
     count++;
+    //hehe
 }
 
 int displayOptions(Player *player){
