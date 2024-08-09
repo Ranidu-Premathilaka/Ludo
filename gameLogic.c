@@ -8,13 +8,10 @@
 #define endWinningSum 6 //1+2+3
 
 //to stop repeatedly typing struct 
-//Posibility of Null pointarraer dereferencing
+//Posibility of Null pointarray dereferencing
 
 Board board[boardLength];
 Player playerArray[4];
-
-// in main ? int roundsElapsed = 0;
-
 
 //functiondef
 void PlayerInit(Player*,char*);
@@ -95,43 +92,13 @@ int main(){
         printf("\n");
 
         printBoard();
-        //exit(1);
-        int x = 0;
-/*        for (int i = 0; i < boardLength; i++){
-        
-            if(board[i].troopCount < 0){
-                printf("troop below 0 at %d",i);
-                exit(1);
-            }
-
-            if(board[i].block == NULL && board[i].troop == NULL){
-                if(board[i].troopCount > 0){
-                    printf("error occured at position %d",i);
-                    exit(1);
-                }
-            }
-            x += board[i].troopCount;
-        }
-        printf("Total troops in board %d\n",x);
-        int y =0;
-        for(int i=0; i<boardPlayers; i++){
-            y += playerArray[i].troopsAtPlay;
-        }
-        printf("Total troops in play according to array %d\n",y);
-*/
-        
-
-        //placeholder
-        //option = getOption(optionAmmount);
         option = randBot(optionAmount,optionArray);
-        //scanf("%d",&option);
+
 //let functions handle exceptions
         char *logArray[2];
         //0- moved name
         //1- eliminated troop name
-        //2- startingpos//
-        //3- endingpos//
-        //4- direction//
+
         if(option == 0){
             //troop To the board
             //changes moveed troop name to the actual name
@@ -689,8 +656,17 @@ int displayOptions(Player *player,int *optionArray,Block *block[],int rollVal){
     printf("%d. TAKEOUT: Troop\n",count);
     
     for (short i = 0; i < playerTroops; i++){
+        //used to check if the next move is possible
+        int newPos = nextBlock(&player->troopArr[i],rollVal,player->troopArr[i].rotation);
+        if(newPos == player->troopArr[i].position || board[newPos].block != NULL){
+            continue;
+        }
+
+        //if troop is at base and movable display posibility
         if(player->troopArr[i].where == 1){
             optionArray[i+1]=1;
+
+            //displaying the move (remove for the prod)
             printf("%d. MOVE: Troop %s is at %d\n",
             i+1,player->troopArr[i].name,player->troopArr[i].position);
             count++;
