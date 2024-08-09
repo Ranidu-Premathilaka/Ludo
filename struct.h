@@ -5,6 +5,10 @@
 #define boardPlayers 4
 #define playerTroops 4
 #define homeRowLength 6
+#define approachLength 6
+#define maxBlocks 2
+#define totalOptions 8
+#define maxBlockName 11
 
 typedef struct Board Board;
 typedef struct Player Player;
@@ -18,6 +22,7 @@ struct Board{
 };
 
 struct Block{
+    char name[maxBlockName];
     Troop *troopArr[playerTroops];
     char rotation;
 };
@@ -28,7 +33,8 @@ struct Troop{
     int position;
     int captures;
     char name[3];
-    char notAtBase;
+    char where;
+    // 0 = not at base, 1 = at base, 2- in homerow
     char rotation;
     //int index;
 };
