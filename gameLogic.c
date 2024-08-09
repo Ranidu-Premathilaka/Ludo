@@ -146,7 +146,7 @@ int main(){
                     break;
                 case 2:
                     printf("Color %s All troops are in play.\n",currentPlayer->name);
-                    goto invalidOption;
+                    //goto invalidOption;
                     break;
                 case 3:
                     printf("Color %s Roll Not a 6.\n",currentPlayer->name);
@@ -178,11 +178,11 @@ int main(){
                 case 2:
                     printf("Color %s piece %s is blocked from moving from L%d to L%d by %s piece\n",
                     currentPlayer->name,logArray[0],startingPos,endingPos,logArray[1]);
-                    goto invalidOption;
+                    //goto invalidOption;
                     break;
                 case 3:
                     printf("Player still in base\n");
-                    goto invalidOption;
+                    //goto invalidOption;
                     break;
             }
             printf("Color %s moves piece %s from location L%d to L%d by %d units in %s Direction. \n",
@@ -202,15 +202,15 @@ int main(){
                     break;
                 case 1:
                     printf("Not enough roll to move block\n");
-                    goto invalidOption;
+                    //goto invalidOption;
                     break;
                 case 2:
                     printf("Can't move block in front\n");
-                    goto invalidOption;
+                    //goto invalidOption;
                     break;
                 case 3:
                     printf("Can't move due to opponent before first encountering block\n");
-                    goto invalidOption;
+                    //goto invalidOption;
                     break;
             }
     }else if(option == 7){
@@ -389,6 +389,7 @@ int troopReset(Troop *troop){
     board[troop->position].troopCount -= 1;
     (troop->owner->troopsAtPlay)--;
     troop->position = 0;
+    troop->captures = 0;
     troop->where = 0;
     troop->rotation = clockwise;
 }
@@ -559,7 +560,6 @@ int movement(Troop *troop,int rollVal,char **elimName){
         return 3;
     }
 
-    removeTroopCell(troop);
     int newPos=nextBlock(troop,rollVal,troop->rotation);
 
     if(newPos == troop->position){
@@ -568,31 +568,40 @@ int movement(Troop *troop,int rollVal,char **elimName){
 
     int playerCount = board[newPos].troopCount;
 
-    if(playerCount == 1){
+    if(playerCount > 0){
         Player *opPlayer = board[newPos].troop->owner;
 
         if(opPlayer == troop->owner){
+            removeTroopCell(troop);
             blockCreation(troop,newPos);
+
             troop->position=newPos;
             return 0;
-        }else{
+
+        }else if(playerCount == 1){
+            removeTroopCell(troop);
             *elimName = board[newPos].troop->name;
             Elimination(board[newPos].troop);
+
             troop->position=newPos;
             troop->captures += 1;
             board[newPos].troopCount =1;
             board[newPos].troop = troop;
             return 4;
+
+        }else{
+            *elimName = board[newPos].troop->name;
+            return 2;
         }
         
     }else if(playerCount == 0){
+        removeTroopCell(troop);
         troop->position=newPos;
         board[newPos].troopCount =1;
         board[newPos].troop = troop;
         return 1;
     }
-    *elimName = board[newPos].troop->name;
-    return 2;
+    
 }
 //return 0- block created or captured
 //return 1- player moved
