@@ -49,7 +49,7 @@ int main(){
     int first = firstPlayer(&playerName[0]);
 
     //srand(time(NULL));
-    srand(1);
+    srand(12321);
     boardInit();
 
     printf("%s has the highest roll and will begin the game.\n",playerName[first]);
@@ -76,7 +76,7 @@ int main(){
 
     while(isGameOver(playerArray)){
         Player *currentPlayer = &playerArray[count%boardPlayers];
-        
+        //2075
         int optionArray[totalOptions]={0};
         Block *block[maxBlocks] = {NULL,NULL};
 
@@ -368,13 +368,15 @@ int Elimination(Troop *troop){
         return 0;
     }
     int pos = troop->position;
-    if(board[pos].troopCount ==1){
+    int troopCount = board[pos].troopCount;
+
+    if(troopCount ==1){
         troopReset(troop);
         board[pos].troop = NULL;
 
         return 1;
     }else{
-        for(short i = 0; i<board[pos].troopCount; i++){
+        for(short i = 0; i<troopCount; i++){
             troopReset(board[pos].block->troopArr[i]);
         }
         blockDeletion(pos);
