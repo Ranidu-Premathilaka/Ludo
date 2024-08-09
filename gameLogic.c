@@ -30,7 +30,7 @@ void blockCreation(Troop *,int);
 void removeTroopCell(Troop *);
 void blockDeletion(int);
 int nextBlock(Troop *,int,int);
-int movement(Troop *,int,char **);
+int movement(Troop *,int,char,char **);
 int blockMovement(Block *, int);
 int displayOptions(Player *,int *,Block *block[],int);
 int isGameOver(Player *);
@@ -69,12 +69,14 @@ int main(){
     }
 
     int count =0;
+    int option;
+    int log;
+    int rollVal;
+    
+
     while(isGameOver(playerArray)){
         Player *currentPlayer = &playerArray[count%boardPlayers];
-        int option;
-        int log;
-        int rollVal;
-
+        
         int optionArray[totalOptions]={0};
         Block *block[maxBlocks] = {NULL,NULL};
 
@@ -130,7 +132,7 @@ int main(){
             Troop *troop = &currentPlayer->troopArr[option-1];
             logArray[0]=troop->name;
             int startingPos = troop->position;
-            log = movement(troop,rollVal,&logArray[1]);
+            log = movement(troop,rollVal,troop->rotation,&logArray[1]);
             int endingPos = troop->position;
             char *direction = (troop->rotation == clockwise) ? "clockwise":"counter clockwise";
             switch (log){
@@ -433,7 +435,10 @@ void blockCreation(Troop *troop,int position){
 
     if(count == 1){
         Block *block = (Block *)malloc(sizeof(Block));
-        if (block == NULL) {exit(1);}
+        if (block == NULL) {
+            printf("Couldn't assign memory to block\n");
+            exit(1);
+        }
         block->troopArr[0] = board[position].troop;    
         board[position].block = block;
     }
@@ -522,12 +527,12 @@ int nextBlock(Troop *troop,int rollVal,int rotation){
     //no block exists in between
     return posCalc(troop->position,rollVal,rotation);
 }
-int movement(Troop *troop,int rollVal,char **elimName){
+int movement(Troop *troop,int rollVal,char rotation,char **elimName){
     if(!troop->where){
         return 3;
     }
 
-    int newPos=nextBlock(troop,rollVal,troop->rotation);
+    int newPos=nextBlock(troop,rollVal,rotation);
 
     if(newPos == troop->position){
         return 2;
@@ -601,7 +606,7 @@ int blockMovement(Block *block, int rollVal){
     }
     for(int i=0; i<count; i++){
         troop = board[oldPos].troop;  
-        movement(troop,rollVal,NULL);
+        movement(troop,rollVal,block->rotation,NULL);
         if(chk){troop->captures++;};
     }
     return 0;
@@ -672,13 +677,14 @@ int displayOptions(Player *player,int *optionArray,Block *block[],int rollVal){
             count++;
         }
     }
+    //troop to board
     if(rollVal==6 && count != 4){
         optionArray[0] = 1;
         count++;
     }
 
     //skip turn is only allowed if no moves exist
-    if(rollVal != 6 && (player->troopsAtPlay+player->troopsAtHome) == 0){
+    if(rollVal != 6 && count == 0){
         optionArray[7]=1;
         count++;
     }
