@@ -30,8 +30,8 @@ void blockCreation(Troop *,int);
 void removeTroopCell(Troop *);
 void blockDeletion(int);
 int nextBlock(Troop *,int,int);
-int movement(Troop *,int,char,char **);
-int blockMovement(Block *, int,char **);
+int movement(Troop *,int,char,char *[]);
+int blockMovement(Block *, int,char *[]);
 int displayOptions(Player *,int *,Block *block[],int);
 int isGameOver(Player *);
 int firstPlayer(char *[]);
@@ -407,7 +407,7 @@ int nextBlock(Troop *troop,int rollVal,int rotation){
     //no block exists in between
     return posCalc(troop->position,rollVal,rotation);
 }
-int movement(Troop *troop,int rollVal,char rotation,char **elimName){
+int movement(Troop *troop,int rollVal,char rotation,char *elimName[]){
     if(!troop->where){
         return 3;
     }
@@ -415,6 +415,7 @@ int movement(Troop *troop,int rollVal,char rotation,char **elimName){
     int newPos=nextBlock(troop,rollVal,rotation);
 
     if(newPos == troop->position){
+        elimName[1] = board[posCalc(newPos,1,rotation)].block->name;
         return 2;
     }
 
@@ -426,16 +427,16 @@ int movement(Troop *troop,int rollVal,char rotation,char **elimName){
         if(opPlayer == troop->owner){
             removeTroopCell(troop);
             blockCreation(troop,newPos);
-            //printf("%s\n",board[newPos].block->name);
-            //if(elimName != NULL){
-            //    *elimName = board[newPos].block->name;
-           // }
+
+            if(elimName != NULL){
+                elimName[1] = board[newPos].block->name;
+            }
             troop->position=newPos;
             return 0;
 
         }else if(playerCount == 1){
             removeTroopCell(troop);
-            *elimName = board[newPos].troop->name;
+            elimName[1] = board[newPos].troop->name;
             Elimination(board[newPos].troop);
 
             troop->position=newPos;
@@ -445,7 +446,7 @@ int movement(Troop *troop,int rollVal,char rotation,char **elimName){
             return 4;
 
         }else{
-            *elimName = board[newPos].troop->name;
+            elimName[1] = board[newPos].troop->name;
             return 2;
         }
         
@@ -464,12 +465,13 @@ int movement(Troop *troop,int rollVal,char rotation,char **elimName){
 //return 3- player is in base
 //return 4- player eliminated someone
 
-int blockMovement(Block *block, int rollVal,char **elimName){
+int blockMovement(Block *block, int rollVal,char *logArray[]){
     Troop *troop = block->troopArr[0];
     int oldPos = troop->position;
     int count = board[oldPos].troopCount;
     rollVal = rollVal/count;
     int chk = 0;
+    int rotation = block->rotation;
 
     if(!rollVal){return 2;}
 
@@ -479,7 +481,7 @@ int blockMovement(Block *block, int rollVal,char **elimName){
         return 3;
     }
     if(board[pos].troopCount == board[oldPos].troopCount){
-        *elimName = board[pos].block->name;
+        logArray[1] = board[pos].block->name;
         Elimination(board[pos].troop);
         chk = 1;
         //eliminates the whole block
@@ -490,7 +492,7 @@ int blockMovement(Block *block, int rollVal,char **elimName){
     }
     for(int i=0; i<count; i++){
         troop = board[oldPos].troop;  
-        movement(troop,rollVal,block->rotation,NULL);
+        movement(troop,rollVal,rotation,NULL);
         if(chk){troop->captures++;};
     }
     return (chk);
@@ -710,7 +712,7 @@ invalidOption:
         logArray[0]=troop->name;
 
         int startingPos = troop->position;
-        log = movement(troop,rollVal,troop->rotation,&logArray[1]);
+        log = movement(troop,rollVal,troop->rotation,logArray);
 
         int endingPos = troop->position;
         char *direction = (troop->rotation == clockwise) ? "clockwise":"counter clockwise";
@@ -741,25 +743,25 @@ invalidOption:
 
     }else if(option == 5 || option == 6){
         Block *currentBlock = block[option-5];
+        Troop *troop = currentBlock->troopArr[0];
 
         int startingPos = currentBlock->troopArr[0]->position;
+        log = blockMovement(currentBlock,rollVal,logArray);
+        int endingPos =troop->position;
 
-        log = blockMovement(currentBlock,rollVal,&logArray[1]);
+        logArray[0]=board[endingPos].block->name;
+        char *direction=(board[endingPos].block->rotation = clockwise) ? "clockwise":"counter clockwise";
 
-        logArray[0]=currentBlock->name;
-        //int endingPos=currentBlock->troopArr[0]->position;
-        //add endingPos to printf 
-        char *direction=(currentBlock->rotation = clockwise) ? "clockwise":"counter clockwise";
-        
         switch (log){
             case 0:
-                printf("Color %s moves Block %s from L%d to L\n",
-                currentPlayer->name,logArray[0],startingPos);  
+            
+                printf("Color %s moves Block %s from L%d to L%d in %s direction.\n",
+                currentPlayer->name,logArray[0],startingPos,endingPos,direction);  
                 break;
             case 1:
-                printf("Color %s Block %s eliminated Block %s and Moved from L%d to L\n",
-                currentPlayer->name,logArray[0],logArray[1],startingPos);
-                break;
+                printf("Color %s Block %s eliminated Block %s and Moved from L%d to L%d in %s direction.\n",
+                currentPlayer->name,logArray[0],logArray[1],startingPos,endingPos,direction);
+                break; 
             case 2:
                 printf("Not enough roll to move block\n");
                 //goto invalidOption;
