@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "struct.h"
+//#include "functions.h"
 
 #define counterClockwise 1
 #define clockwise 0
@@ -14,11 +15,12 @@ Board board[boardLength];
 Player playerArray[4];
 
 //functiondef
+
 void PlayerInit(Player*,char*);
 void boardInit();
 int roll();
 int coinFlip();
-int troopToBoard(int ,Player *,char **);
+int troopToBoard(int ,Player *,char *[]);
 int troopToBase(Troop *);
 int spin(Troop *);
 Troop *nextTroop(Player *);
@@ -39,9 +41,10 @@ void updateBlockName(int );
 int randBot(int ,int *);
 void printBoard();
 void orderPrint(int,char *[]);
-void game(Player *,int,int);
+int game(Player *,int);
 int approachPassed(Troop *,int,int);
 
+/*
 int main(){
 
     int elapsedRounds=0;
@@ -59,15 +62,26 @@ int main(){
     orderPrint(first,playerName);
     
     while(isGameOver(playerArray)){
+        int streak = 0;
+        int playerIndex = count%boardPlayers;
         rollVal = roll();
-        game(&playerArray[count%boardPlayers],count,rollVal);
-        printf("%d\n",count);
-        //printBoard();
+        game(&playerArray[playerIndex],count,rollVal);
+        /*
+        do{
+            streak++;
+            if(streak == 3){
+                printf("Three concecutive 6's\n");    
+                break;
+            }
+            rollVal = roll();
+            game(&playerArray[playerIndex],count,rollVal);
+        } while (rollVal == 6);
+        
         count++;
     }
 
 }
-
+*/
 
 //Player
 void PlayerInit(Player *player,char *playerName){
@@ -127,13 +141,13 @@ int coinFlip(){
 
 //Player based Logic
 
-int troopToBoard(int rollVal,Player *player,char **logArray){
+int troopToBoard(int rollVal,Player *player,char *logArray[]){
 
     if(rollVal==6){
             Troop *troop = nextTroop(player);
-            *logArray = troop->name;
         if (troop != NULL){
-            
+            logArray[0] = troop->name;
+
             int count = board[player->startingLocation].troopCount;
             Player *opPlayer = NULL;
             if (count > 0){
@@ -142,6 +156,7 @@ int troopToBoard(int rollVal,Player *player,char **logArray){
             
             
             if(opPlayer != player && count > 1){
+                logArray[1] = board[player->startingLocation].block->name;
                 return 4;
             }
             
@@ -157,10 +172,12 @@ int troopToBoard(int rollVal,Player *player,char **logArray){
                     return 0;
                 }else{
                 //already checked if count == 1;
+                    logArray[1] = board[player->startingLocation].troop->name;
                     Elimination(board[player->startingLocation].troop);
                     troop->captures += 1;
                     board[player->startingLocation].troopCount =1;
                     board[player->startingLocation].troop = troop;
+                    return 5;
                 }
             }else{
                 board[player->startingLocation].troop = troop;
@@ -174,10 +191,11 @@ int troopToBoard(int rollVal,Player *player,char **logArray){
     return 3;
 }
 //return 0 - Block Created
-//return 1 - player in approach
+//return 1 - successfully moved
 //return 2 - All troops in board
 //return 3 - Roll not a 6
 //return 4 - Blocked by opponent
+//return 5 - Eliminated opponent
 
 int spin(Troop *troop){
     if(troop->where){
@@ -539,6 +557,9 @@ int isGameOver(Player *playerArray){
     //1.Take troop Out from base
     //2.Move standard board peices(2.1-R1,2.2-R2)
     //3.Move block
+
+//work on the displayOptions
+//blocks needed to be checked if a move is possible or not right?
 int displayOptions(Player *player,int *optionArray,Block *block[],int rollVal){
 
     int count = 0;
@@ -667,15 +688,41 @@ void printBoard(){
     }
 }
 
-void game(Player *currentPlayer,int count,int rollVal){
-    int option,log;
+void playerTurn(int playerIndex){
+    int rollVal,logCode,streak=0;
+    while (1){
+        if(rollVal == 6){
+            streak++;
+        }else if(logCode == 1){
+            streak = 0;
+        }else{
+            break;
+        }
+    
+        if(streak == 3){
+            printf("Three concecutive 6's\n");    
+            break;
+        }
+        rollVal = roll();
+        logCode = game(&playerArray[playerIndex],rollVal);
+    }
+}
+
+void printEnd(int playerIndex){
+    //print round results
+}
+
+int game(Player *currentPlayer,int rollVal){
+    int option,log,rollVal;
+    int logCode = 0;
+    int streak = 0;
     char *logArray[2];  //0- moved name,1- eliminated troop name
     int optionArray[totalOptions]={0};
     Block *block[maxBlocks] = {NULL,NULL};
 
     printf("%s rolls %d\n",currentPlayer->name,rollVal);
 
-invalidOption:
+    //invalidOption:
     int optionAmount = displayOptions(currentPlayer,optionArray,block,rollVal);
     option = randBot(optionAmount,optionArray);
     //printf("heheheheheh%d\n",option);
@@ -684,7 +731,7 @@ invalidOption:
     //some of the cases do not happen do to the functions above are implemented
     //remove them accordingly
     if(option == 0){
-        log = troopToBoard(rollVal,currentPlayer,&logArray[0]);
+        log = troopToBoard(rollVal,currentPlayer,logArray);
         int playersAtBase = playerTroops - (currentPlayer->troopsAtPlay+currentPlayer->troopsAtHome);
         switch (log){
             case 0:
@@ -700,6 +747,14 @@ invalidOption:
                 printf("Color %s Roll Not a 6.\n",currentPlayer->name);
                 //goto invalidOption;
                 break;
+            case 4:
+                printf("blocked by opponent %s\n",logArray[1]);
+                //goto invalidOption;
+                break;
+            case 5:
+                printf("%s eliminated %s\n",logArray[0],logArray[1]);
+                break;
+        
         }
 
         printf("Color %s Moves %s to the starting point. \n",currentPlayer->name,logArray[0]);
@@ -727,6 +782,7 @@ invalidOption:
             case 4:
                 printf("Color %s piece %s Eliminated %s\n",
                 currentPlayer->name,logArray[0],logArray[1]);
+                logCode = 1;
                 break;
             case 2:
                 printf("Color %s piece %s is blocked from moving from L%d to L%d by %s piece\n",
@@ -761,6 +817,7 @@ invalidOption:
             case 1:
                 printf("Color %s Block %s eliminated Block %s and Moved from L%d to L%d in %s direction.\n",
                 currentPlayer->name,logArray[0],logArray[1],startingPos,endingPos,direction);
+                logCode = 1;
                 break; 
             case 2:
                 printf("Not enough roll to move block\n");
@@ -779,4 +836,7 @@ invalidOption:
     printf("Color %s Turn skipped \n",currentPlayer->name);
 }
 
+return logCode;
 }
+//logCode 0 - no elimination
+//logCode 1 - elimination
