@@ -52,7 +52,7 @@ int main(){
     
     char *playerName[4] = {"Red","Green","Yellow","Blue"};
     //2341
-    srand(1);
+    srand(2341);
     boardInit();
 
     int first = firstPlayer(playerName);
@@ -62,7 +62,7 @@ int main(){
         rollVal = roll();
         game(&playerArray[count%boardPlayers],count,rollVal);
         printf("%d\n",count);
-        printBoard();
+        //printBoard();
         count++;
     }
 
@@ -126,7 +126,6 @@ int coinFlip(){
 //tail - 0
 
 //Player based Logic
-
 
 int troopToBoard(int rollVal,Player *player,char **logArray){
 
@@ -550,7 +549,8 @@ int displayOptions(Player *player,int *optionArray,Block *block[],int rollVal){
     for (short i = 0; i < playerTroops; i++){
         //used to check if the next move is possible
         int newPos = nextBlock(&player->troopArr[i],rollVal,player->troopArr[i].rotation);
-        if(newPos == player->troopArr[i].position || board[newPos].block != NULL){
+        //removed newPos == player->troopArr[i].position from check
+        if(board[newPos].block != NULL){
             continue;
         }
 
@@ -565,7 +565,7 @@ int displayOptions(Player *player,int *optionArray,Block *block[],int rollVal){
         }
     }
     //troop to board
-    if(rollVal==6 && count != 4){
+    if(rollVal==6 && (player->troopsAtHome+player->troopsAtPlay) != 4){
         optionArray[0] = 1;
         count++;
     }
