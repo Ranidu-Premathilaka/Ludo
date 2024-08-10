@@ -31,163 +31,41 @@ void removeTroopCell(Troop *);
 void blockDeletion(int);
 int nextBlock(Troop *,int,int);
 int movement(Troop *,int,char,char **);
-int blockMovement(Block *, int);
+int blockMovement(Block *, int,char **);
 int displayOptions(Player *,int *,Block *block[],int);
 int isGameOver(Player *);
 int firstPlayer(char *[]);
 void updateBlockName(int );
 int randBot(int ,int *);
 void printBoard();
+void orderPrint(int,char *[]);
+void game(Player *,int,int);
+int approachPassed(Troop *,int,int);
 
 int main(){
 
     int elapsedRounds=0;
     int playerPosition = 1;
     int max = 0;
-
-    char *playerName[4] = {"Red","Green","Yellow","Blue"};
-    int first = firstPlayer(&playerName[0]);
-
-    //srand(time(NULL));
-    srand(12321);
-    boardInit();
-
-    printf("%s has the highest roll and will begin the game.\n",playerName[first]);
-    printf("The order of a single round is ");
-
-    int range = boardPlayers+first;
-    for (short i = first; i <range ; i++){
-        int x = i % boardPlayers;
-        int cnt = i-first;
-        PlayerInit(&playerArray[cnt],playerName[x]);
-
-        if(i+1 == range){
-            printf("and %s\n",playerArray[cnt].name);
-        }else{
-            printf("%s, ",playerArray[cnt].name);
-        }
-    }
-
     int count =0;
-    int option;
-    int log;
     int rollVal;
     
+    char *playerName[4] = {"Red","Green","Yellow","Blue"};
+    //2341
+    srand(1);
+    boardInit();
 
+    int first = firstPlayer(playerName);
+    orderPrint(first,playerName);
+    
     while(isGameOver(playerArray)){
-        Player *currentPlayer = &playerArray[count%boardPlayers];
-        //2075
-        int optionArray[totalOptions]={0};
-        Block *block[maxBlocks] = {NULL,NULL};
-
         rollVal = roll();
-        printf("%s rolls %d\n",currentPlayer->name,rollVal);
-
-    invalidOption:
-        int optionAmount = displayOptions(currentPlayer,optionArray,block,rollVal);
-
-        for (int i = 0; i < totalOptions; i++)
-        {
-           printf("%d \t",optionArray[i]);
-        }
-        printf("%d",optionAmount);
-        printf("\n");
-
+        game(&playerArray[count%boardPlayers],count,rollVal);
+        printf("%d\n",count);
         printBoard();
-        option = randBot(optionAmount,optionArray);
-
-//let functions handle exceptions
-        char *logArray[2];
-        //0- moved name
-        //1- eliminated troop name
-
-        if(option == 0){
-            //troop To the board
-            //changes moveed troop name to the actual name
-            // if block all troop names
-            log = troopToBoard(rollVal,currentPlayer,&logArray[0]);
-            int playersAtBase = playerTroops - (currentPlayer->troopsAtPlay+currentPlayer->troopsAtHome);
-            switch (log){
-                case 0:
-                    printf("Block created on starting point. \n");
-                    break;
-                case 1:
-                    break;
-                case 2:
-                    printf("Color %s All troops are in play.\n",currentPlayer->name);
-                    //goto invalidOption;
-                    break;
-                case 3:
-                    printf("Color %s Roll Not a 6.\n",currentPlayer->name);
-                    //goto invalidOption;
-                    break;
-            }
-
-            printf("Color %s Moves %s to the starting point. \n",currentPlayer->name,logArray[0]);
-            printf("Player now has %d/4 of pieces on board and  %d/4 number of pieces on base \n",
-                    currentPlayer->troopsAtPlay,playersAtBase);
-
-        }else if(option > 0 && option <= 4){
-            // troop in board movement
-            Troop *troop = &currentPlayer->troopArr[option-1];
-            logArray[0]=troop->name;
-            int startingPos = troop->position;
-            log = movement(troop,rollVal,troop->rotation,&logArray[1]);
-            int endingPos = troop->position;
-            char *direction = (troop->rotation == clockwise) ? "clockwise":"counter clockwise";
-            switch (log){
-                case 0:
-                    printf("Block created on L%d\n",endingPos);
-                    break;
-                case 1:
-                    break;
-                case 4:
-                    printf("Player Eliminated\n");
-                    break;
-                case 2:
-                    printf("Color %s piece %s is blocked from moving from L%d to L%d by %s piece\n",
-                    currentPlayer->name,logArray[0],startingPos,endingPos,logArray[1]);
-                    //goto invalidOption;
-                    break;
-                case 3:
-                    printf("Player still in base\n");
-                    //goto invalidOption;
-                    break;
-            }
-            printf("Color %s moves piece %s from location L%d to L%d by %d units in %s Direction. \n",
-                    currentPlayer->name,logArray[0],startingPos,endingPos,rollVal,direction);
-
-        }else if(option == 5 || option == 6){
-
-            char *blockName; 
-            char *startingPos; //access troop with player from index
-            char *EliminationBlockName;
-            log = blockMovement(block[option-5],rollVal);
-            char *endingPos; //access troop with player from index
-            char *direction; //access troop with player from index
-            switch (log){
-                case 0:
-                    printf("Block Moved\n");
-                    break;
-                case 1:
-                    printf("Not enough roll to move block\n");
-                    //goto invalidOption;
-                    break;
-                case 2:
-                    printf("Can't move block in front\n");
-                    //goto invalidOption;
-                    break;
-                case 3:
-                    printf("Can't move due to opponent before first encountering block\n");
-                    //goto invalidOption;
-                    break;
-            }
-    }else if(option == 7){
-        printf("Turn skipped \n");
+        count++;
     }
-    printf("%d \n",count);
-    count++;
-    }
+
 }
 
 
@@ -425,11 +303,10 @@ void blockCreation(Troop *troop,int position){
     //the count can't be 0;
     int count = board[position].troopCount;
     //debugging
-    /*
     if(board[position].troop->owner != troop->owner){
         printf("Error: Troop owner and cell owner mismatch\n");
         exit(1);
-    }*/
+    }
     if(count == 0 || count == 4){
         printf("Error: Full Block already exists or no troops in position\n");
         exit(1);
@@ -437,6 +314,7 @@ void blockCreation(Troop *troop,int position){
 
     if(count == 1){
         Block *block = (Block *)malloc(sizeof(Block));
+        printf("pointer%p \n",block);
         if (block == NULL) {
             printf("Couldn't assign memory to block\n");
             exit(1);
@@ -548,7 +426,10 @@ int movement(Troop *troop,int rollVal,char rotation,char **elimName){
         if(opPlayer == troop->owner){
             removeTroopCell(troop);
             blockCreation(troop,newPos);
-
+            //printf("%s\n",board[newPos].block->name);
+            //if(elimName != NULL){
+            //    *elimName = board[newPos].block->name;
+           // }
             troop->position=newPos;
             return 0;
 
@@ -583,39 +464,41 @@ int movement(Troop *troop,int rollVal,char rotation,char **elimName){
 //return 3- player is in base
 //return 4- player eliminated someone
 
-int blockMovement(Block *block, int rollVal){
+int blockMovement(Block *block, int rollVal,char **elimName){
     Troop *troop = block->troopArr[0];
     int oldPos = troop->position;
     int count = board[oldPos].troopCount;
     rollVal = rollVal/count;
     int chk = 0;
 
-    if(!rollVal){return 1;}
+    if(!rollVal){return 2;}
 
     int pos = nextBlock(troop,rollVal,block->rotation);
 
     if(pos == oldPos){
-        return 2;
+        return 3;
     }
     if(board[pos].troopCount == board[oldPos].troopCount){
+        *elimName = board[pos].block->name;
         Elimination(board[pos].troop);
         chk = 1;
         //eliminates the whole block
     }
 
     if(board[pos].troopCount != 0){
-        return 3;
+        return 4;
     }
     for(int i=0; i<count; i++){
         troop = board[oldPos].troop;  
         movement(troop,rollVal,block->rotation,NULL);
         if(chk){troop->captures++;};
     }
-    return 0;
+    return (chk);
 }
-//return 3 - Can't move due to opponent before first encountering block
-//return 2 - can't move block in front
-//return 1 - not enough roll to move block
+//return 4 - Can't move due to opponent before first encountering block
+//return 3 - can't move block in front
+//return 2 - not enough roll to move block
+//return 1 - eliminated;
 //return 0 - move sucessful 
 
 int approachPassed(Troop *troop,int rollVal,int isBlock){
@@ -733,7 +616,26 @@ int firstPlayer(char *playerName[]){
         printf("%s rolls %d \n",playerName[i],rollVal);
     }
     return firstPlayer;
+
 }
+
+void orderPrint(int first,char *playerName[]){
+    printf("%s has the highest roll and will begin the game.\n",playerName[first]);
+    printf("The order of a single round is ");
+    int range = boardPlayers+first;
+    for (short i = first; i <range ; i++){
+        int x = i % boardPlayers;
+        int cnt = i-first;
+        PlayerInit(&playerArray[cnt],playerName[x]);
+
+        if(i+1 == range){
+            printf("and %s\n",playerArray[cnt].name);
+        }else{
+            printf("%s, ",playerArray[cnt].name);
+        }
+    }
+}
+
 
 int randBot(int optionAmount,int *optionArray){
     /*
@@ -761,4 +663,118 @@ void printBoard(){
             printf("\n");
         }
     }
+}
+
+void game(Player *currentPlayer,int count,int rollVal){
+    int option,log;
+    char *logArray[2];  //0- moved name,1- eliminated troop name
+    int optionArray[totalOptions]={0};
+    Block *block[maxBlocks] = {NULL,NULL};
+
+    printf("%s rolls %d\n",currentPlayer->name,rollVal);
+
+invalidOption:
+    int optionAmount = displayOptions(currentPlayer,optionArray,block,rollVal);
+    option = randBot(optionAmount,optionArray);
+    //printf("heheheheheh%d\n",option);
+    
+
+    //some of the cases do not happen do to the functions above are implemented
+    //remove them accordingly
+    if(option == 0){
+        log = troopToBoard(rollVal,currentPlayer,&logArray[0]);
+        int playersAtBase = playerTroops - (currentPlayer->troopsAtPlay+currentPlayer->troopsAtHome);
+        switch (log){
+            case 0:
+                printf("Block created on starting point. \n");
+                break;
+            case 1:
+                break;
+            case 2:
+                printf("Color %s All troops are in play.\n",currentPlayer->name);
+                //goto invalidOption;
+                break;
+            case 3:
+                printf("Color %s Roll Not a 6.\n",currentPlayer->name);
+                //goto invalidOption;
+                break;
+        }
+
+        printf("Color %s Moves %s to the starting point. \n",currentPlayer->name,logArray[0]);
+        printf("Player now has %d/4 of pieces on board and  %d/4 number of pieces on base \n",
+                currentPlayer->troopsAtPlay,playersAtBase);
+
+    }else if(option > 0 && option <= 4){
+        // troop in board movement
+        Troop *troop = &currentPlayer->troopArr[option-1];
+        logArray[0]=troop->name;
+
+        int startingPos = troop->position;
+        log = movement(troop,rollVal,troop->rotation,&logArray[1]);
+
+        int endingPos = troop->position;
+        char *direction = (troop->rotation == clockwise) ? "clockwise":"counter clockwise";
+
+        switch (log){
+            case 0:
+                printf("Color %s piece %s Created a Block %s on L%d\n",
+                currentPlayer->name,logArray[0],logArray[1],endingPos);
+                break;
+            case 1:
+                break;
+            case 4:
+                printf("Color %s piece %s Eliminated %s\n",
+                currentPlayer->name,logArray[0],logArray[1]);
+                break;
+            case 2:
+                printf("Color %s piece %s is blocked from moving from L%d to L%d by %s piece\n",
+                currentPlayer->name,logArray[0],startingPos,endingPos,logArray[1]);
+                //goto invalidOption;
+                break;
+            case 3:
+                printf("Color %s Player %s is still in base\n",currentPlayer->name,logArray[0]);
+                //goto invalidOption;
+                break;
+        }
+        printf("Color %s moves piece %s from location L%d to L%d by %d units in %s Direction. \n",
+                currentPlayer->name,logArray[0],startingPos,endingPos,rollVal,direction);
+
+    }else if(option == 5 || option == 6){
+        Block *currentBlock = block[option-5];
+
+        int startingPos = currentBlock->troopArr[0]->position;
+
+        log = blockMovement(currentBlock,rollVal,&logArray[1]);
+
+        logArray[0]=currentBlock->name;
+        //int endingPos=currentBlock->troopArr[0]->position;
+        //add endingPos to printf 
+        char *direction=(currentBlock->rotation = clockwise) ? "clockwise":"counter clockwise";
+        
+        switch (log){
+            case 0:
+                printf("Color %s moves Block %s from L%d to L\n",
+                currentPlayer->name,logArray[0],startingPos);  
+                break;
+            case 1:
+                printf("Color %s Block %s eliminated Block %s and Moved from L%d to L\n",
+                currentPlayer->name,logArray[0],logArray[1],startingPos);
+                break;
+            case 2:
+                printf("Not enough roll to move block\n");
+                //goto invalidOption;
+                break;
+            case 3:
+                printf("Can't move block in front\n");
+                //goto invalidOption;
+                break;
+            case 4:
+                printf("Can't move due to opponent before first encountering block\n");
+                //goto invalidOption;
+                break;
+        }
+}else if(option == 7){
+    printf("Color %s Turn skipped \n",currentPlayer->name);
+}
+
 }
