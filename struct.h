@@ -7,6 +7,7 @@
 #define homeRowLength 6
 #define approachLength 6
 #define maxBlocks 2
+#define maxRollVal 6
 #define totalOptions 8
 #define maxBlockName 11
 
@@ -36,7 +37,7 @@ struct Troop{
     char where;
     // 0 = not at base, 1 = at base, 2- in homerow
     char rotation;
-    //int index;
+    int index;
 };
 
 struct Player{

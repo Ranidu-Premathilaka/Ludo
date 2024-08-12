@@ -17,8 +17,7 @@ int main(){
     orderPrint(first,playerName);
     
     while(isGameOver(playerArray)){
-        game(&playerArray[count%boardPlayers],count);
-        
+        playerTurn(count%boardPlayers);
         count++;
     }
 

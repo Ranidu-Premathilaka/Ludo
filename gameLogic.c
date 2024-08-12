@@ -10,6 +10,7 @@
 
 //to stop repeatedly typing struct 
 //Posibility of Null pointarray dereferencing
+//turn char methods into int not worth it
 
 Board board[boardLength];
 Player playerArray[4];
@@ -41,8 +42,10 @@ void updateBlockName(int );
 int randBot(int ,int *);
 void printBoard();
 void orderPrint(int,char *[]);
-int game(Player *,int);
+int game(Player *,int,int,Block *[]);
 int approachPassed(Troop *,int,int);
+void blockBreak(int,int,Block *[]);
+void genUniqueNum(int,int *);
 
 /*
 int main(){
@@ -75,7 +78,7 @@ int main(){
             }
             rollVal = roll();
             game(&playerArray[playerIndex],count,rollVal);
-        } while (rollVal == 6);
+        } while (rollVal == maxRollVal);
         
         count++;
     }
@@ -106,6 +109,7 @@ void PlayerInit(Player *player,char *playerName){
         player->troopArr[i].captures = 0;
         player->troopArr[i].owner = player;
         player->troopArr[i].rotation = clockwise;
+        player->troopArr[i].index = i;
 
     }
     for (short i = 0; i < homeRowLength; i++){
@@ -130,7 +134,7 @@ void boardInit(){
 
 //Non playerbased logic
 int roll(){
-    return (rand()%6 +1);
+    return (rand()%maxRollVal +1);
 }
 
 int coinFlip(){
@@ -143,7 +147,7 @@ int coinFlip(){
 
 int troopToBoard(int rollVal,Player *player,char *logArray[]){
 
-    if(rollVal==6){
+    if(rollVal==maxRollVal){
             Troop *troop = nextTroop(player);
         if (troop != NULL){
             logArray[0] = troop->name;
@@ -586,13 +590,13 @@ int displayOptions(Player *player,int *optionArray,Block *block[],int rollVal){
         }
     }
     //troop to board
-    if(rollVal==6 && (player->troopsAtHome+player->troopsAtPlay) != 4){
+    if(rollVal==maxRollVal && (player->troopsAtHome+player->troopsAtPlay) != 4){
         optionArray[0] = 1;
         count++;
     }
 
     //skip turn is only allowed if no moves exist
-    if(rollVal != 6 && count == 0){
+    if(rollVal != maxRollVal && count == 0){
         optionArray[7]=1;
         count++;
     }
@@ -669,6 +673,12 @@ int randBot(int optionAmount,int *optionArray){
     //processes when option amount is larger
     //same probability
     int randomVal = rand()%optionAmount;
+
+    //choose what block to break
+    if(optionArray == NULL){
+        return randomVal;
+    }
+
     int count = 0;
     for (int i = 0; i < totalOptions; i++){
         if(optionArray[i]){
@@ -689,22 +699,101 @@ void printBoard(){
 }
 
 void playerTurn(int playerIndex){
-    int rollVal,logCode,streak=0;
+    int rollVal=0,option,logCode=-1,streak=0;
+    int firstRoll = 1;
+
     while (1){
-        if(rollVal == 6){
+        int optionArray[totalOptions]={0};
+        int optionAmount;
+        Block *block[maxBlocks] = {NULL,NULL};
+
+        if(rollVal == maxRollVal){
             streak++;
         }else if(logCode == 1){
             streak = 0;
-        }else{
+        }else if(!firstRoll){
             break;
         }
-    
+        
         if(streak == 3){
-            printf("Three concecutive 6's\n");    
+            printf("Three concecutive 6's\n");
+            int count;
+            for (short i = 0; i < maxBlocks; i++){
+                if(block[i] != NULL){
+                    count++;
+                }
+            }
+            if(count){
+                printf("Player has %d blocks \n",count);
+                blockBreak(playerIndex,count,block);
+            }else{
+                printf("Player has no blocks. Skipping turn\n");
+            }
             break;
         }
+
         rollVal = roll();
-        logCode = game(&playerArray[playerIndex],rollVal);
+        optionAmount = displayOptions(&playerArray[playerIndex],optionArray,block,rollVal);
+        option = randBot(optionAmount,optionArray);
+
+        logCode = game(&playerArray[playerIndex],rollVal,option,block);
+        firstRoll=0;
+    }
+}
+
+//not unit tested
+void blockBreak(int playerIndex,int count,Block *block[]){
+    int choice = randBot(count,NULL);
+    printf("Player Choose to break block %s \n",block[choice]->name);
+
+    int pos = block[choice]->troopArr[0]->position;
+    int troopCount = board[pos].troopCount;
+
+    //maybe implement direction check too?
+    int values[playerTroops]={0};
+    genUniqueNum(troopCount,values);
+
+    //troop count 3
+    //if we take that a piece has to move
+    //where troop count is 4 this would be imposible to move without creating another block
+    //thus let's take 0 as a possible move too 
+
+    for (short i = 0; i < troopCount; i++){
+        Troop *troop = board[pos].troop;
+        game(&playerArray[playerIndex],values[i],troop->index+1,NULL);
+    }
+
+}
+
+//fix algorithm current one is bad?
+void genUniqueNum(int troopCount, int *result){
+    int randomVal = rand();
+    if(troopCount == 2){
+        char arrangements[3][2] = {"60","51","42"};
+        int index = randomVal%3;
+        int srt = randomVal%2;
+        for (short i = 0; i < 2; i++){
+
+            result[(srt + i)%2] = (int)arrangements[index][i] - '0';
+        }
+        
+
+    }else if(troopCount == 3){
+        char arrangements[3][3] = {"510","420","321"};
+        int index = randomVal%3;
+        int srt = rand()%3;
+        for (short i = 0; i < 3; i++){
+
+            result[(srt + i)%3] = (int)arrangements[index][i] - '0';
+        }
+
+
+    }else if(troopCount == 4){
+        int srt = randomVal%4;
+
+        for (short i = 0; i < 4; i++){
+            result[(srt + i)%4]=i;
+        }
     }
 }
 
@@ -712,21 +801,18 @@ void printEnd(int playerIndex){
     //print round results
 }
 
-int game(Player *currentPlayer,int rollVal){
-    int option,log,rollVal;
+
+//logCode 0 - no elimination
+//logCode 1 - elimination
+int game(Player *currentPlayer,int rollVal,int option,Block *block[]){
+    int log;
     int logCode = 0;
     int streak = 0;
     char *logArray[2];  //0- moved name,1- eliminated troop name
-    int optionArray[totalOptions]={0};
-    Block *block[maxBlocks] = {NULL,NULL};
+
 
     printf("%s rolls %d\n",currentPlayer->name,rollVal);
-
-    //invalidOption:
-    int optionAmount = displayOptions(currentPlayer,optionArray,block,rollVal);
-    option = randBot(optionAmount,optionArray);
-    //printf("heheheheheh%d\n",option);
-    
+     
 
     //some of the cases do not happen do to the functions above are implemented
     //remove them accordingly
@@ -838,5 +924,3 @@ int game(Player *currentPlayer,int rollVal){
 
 return logCode;
 }
-//logCode 0 - no elimination
-//logCode 1 - elimination
