@@ -96,7 +96,7 @@ void PlayerInit(Player *player,char *playerName){
     player->troopsAtHome=0;
     player->index = count;
     player->startingLocation = 13*count;
-    player->approachLocation = posCalc(13*count,2,1);
+    player->approachLocation = posCalc(13*count,2,counterClockwise);
     player->isWinner = 0;
     count++;
     
@@ -335,7 +335,7 @@ void blockCreation(Troop *troop,int position){
 
     if(count == 1){
         Block *block = (Block *)malloc(sizeof(Block));
-        printf("pointer%p \n",block);
+
         if (block == NULL) {
             printf("Couldn't assign memory to block\n");
             exit(1);
@@ -629,6 +629,8 @@ int displayOptions(Player *player,int *optionArray,Block *block[],int rollVal){
     return count+blockCount;
     
 }
+//for printing all a simple function can be implemented
+
 
 int firstPlayer(char *playerName[]){
     int firstPlayer = 0;
@@ -704,8 +706,8 @@ void playerTurn(int playerIndex){
 
     while (1){
         int optionArray[totalOptions]={0};
+        Block *block[maxBlocks]={0};
         int optionAmount;
-        Block *block[maxBlocks] = {NULL,NULL};
 
         if(rollVal == maxRollVal){
             streak++;
@@ -714,6 +716,8 @@ void playerTurn(int playerIndex){
         }else if(!firstRoll){
             break;
         }
+        rollVal = rand()%2+5;
+        optionAmount = displayOptions(&playerArray[playerIndex],optionArray,block,rollVal);
         
         if(streak == 3){
             printf("Three concecutive 6's\n");
@@ -731,11 +735,10 @@ void playerTurn(int playerIndex){
             }
             break;
         }
-
-        rollVal = roll();
-        optionAmount = displayOptions(&playerArray[playerIndex],optionArray,block,rollVal);
+        
+        //optionAmount = displayOptions(&playerArray[playerIndex],optionArray,block,rollVal);
+        //option = randBot(optionAmount,optionArray);
         option = randBot(optionAmount,optionArray);
-
         logCode = game(&playerArray[playerIndex],rollVal,option,block);
         firstRoll=0;
     }
