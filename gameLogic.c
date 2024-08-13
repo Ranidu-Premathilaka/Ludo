@@ -701,7 +701,7 @@ void printBoard(){
 }
 
 void playerTurn(int playerIndex){
-    int rollVal=0,option,logCode=-1,streak=0;
+    int rollVal=0,option,logCode=-1,streak=1;
     int firstRoll = 1;
 
     while (1){
@@ -716,7 +716,7 @@ void playerTurn(int playerIndex){
         }else if(!firstRoll){
             break;
         }
-        rollVal = rand()%2+5;
+        rollVal = roll();
         optionAmount = displayOptions(&playerArray[playerIndex],optionArray,block,rollVal);
         
         if(streak == 3){
