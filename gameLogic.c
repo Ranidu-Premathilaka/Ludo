@@ -95,8 +95,8 @@ void PlayerInit(Player *player,char *playerName){
     player->troopsAtPlay=0;
     player->troopsAtHome=0;
     player->index = count;
-    player->startingLocation = 13*count;
-    player->approachLocation = posCalc(13*count,2,counterClockwise);
+    player->startingLocation = 13*count + 2; //posCalc(13*count,2,counterClockwise) if more than 4 players hehe;
+    player->approachLocation = 13*count;
     player->isWinner = 0;
     count++;
     
@@ -701,27 +701,31 @@ void printBoard(){
 }
 
 void playerTurn(int playerIndex){
-    int rollVal=0,option,logCode=-1,streak=1;
-    int firstRoll = 1;
-
+    int option;
+    int logCode=-1;
+    int streak=1;
+    int rollVal = roll();
+    
     while (1){
         int optionArray[totalOptions]={0};
         Block *block[maxBlocks]={0};
-        int optionAmount;
+ 
+        int optionAmount =displayOptions(&playerArray[playerIndex],optionArray,block,rollVal);;
+        option = randBot(optionAmount,optionArray);
+        logCode = game(&playerArray[playerIndex],rollVal,option,block);
 
         if(rollVal == maxRollVal){
             streak++;
         }else if(logCode == 1){
-            streak = 0;
-        }else if(!firstRoll){
+            streak = 1;
+        }else{
             break;
         }
-        rollVal = roll();
-        optionAmount = displayOptions(&playerArray[playerIndex],optionArray,block,rollVal);
         
-        if(streak == 3){
+        rollVal = roll();
+        if(streak == 3 && rollVal ==6){
             printf("Three concecutive 6's\n");
-            int count;
+            int count = 0;
             for (short i = 0; i < maxBlocks; i++){
                 if(block[i] != NULL){
                     count++;
@@ -735,12 +739,7 @@ void playerTurn(int playerIndex){
             }
             break;
         }
-        
-        //optionAmount = displayOptions(&playerArray[playerIndex],optionArray,block,rollVal);
-        //option = randBot(optionAmount,optionArray);
-        option = randBot(optionAmount,optionArray);
-        logCode = game(&playerArray[playerIndex],rollVal,option,block);
-        firstRoll=0;
+
     }
 }
 

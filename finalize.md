@@ -1,6 +1,7 @@
 if a block moves 3 times with rolling 6 consecutively
     blockade has to be broken
         sum of moves should be equivelent to 6
+:done
 
 need one captured to move to the homerow
 

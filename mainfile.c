@@ -8,7 +8,7 @@ int main(){
     int count =0;
     int rollVal;
     
-    char *playerName[4] = {"Red","Green","Yellow","Blue"};
+    char *playerName[4] = {"Yellow","Blue","Red","Green"};
     //2341
     srand(2341);
     boardInit();
