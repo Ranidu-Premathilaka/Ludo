@@ -4,16 +4,14 @@
 #include "struct.h"
 //#include "functions.h"
 
-#define counterClockwise 1
-#define clockwise 0
-#define endWinningSum 6 //1+2+3
+
+Board board[boardLength];
+Player playerArray[4];
 
 //to stop repeatedly typing struct 
 //Posibility of Null pointarray dereferencing
 //turn char methods into int not worth it
 
-Board board[boardLength];
-Player playerArray[4];
 
 //functiondef
 
@@ -29,23 +27,28 @@ int posCalc(int,int,int);
 int troopReset(Troop *);
 int Elimination(Troop *);
 int calcBlockSpin(int);
-void blockCreation(Troop *,int);
+void blockCreation(Troop *,int,Board *);
+void updateBlockName(int,Board *);
 void removeTroopCell(Troop *);
 void blockDeletion(int);
 int nextBlock(Troop *,int,int);
 int movement(Troop *,int,char,char *[]);
 int blockMovement(Block *, int,char *[]);
-int displayOptions(Player *,int *,Block *block[],int);
+int troopToHome();
+int approachDistance(int,int,int);
+int isApproachPassed(Troop *,int,int,int);
+void approachPassed(Troop *,int,int);
+int isBlockApproachPassed(Block *,int,int);
 int isGameOver(Player *);
+int displayOptions(Player *,int *,Block *block[],int);
 int firstPlayer(char *[]);
-void updateBlockName(int );
 int randBot(int ,int *);
 void printBoard();
 void orderPrint(int,char *[]);
 int game(Player *,int,int,Block *[]);
-int approachPassed(Troop *,int,int);
 void blockBreak(int,int,Block *[]);
 void genUniqueNum(int,int *);
+
 
 /*
 int main(){
@@ -109,6 +112,7 @@ void PlayerInit(Player *player,char *playerName){
         player->troopArr[i].captures = 0;
         player->troopArr[i].owner = player;
         player->troopArr[i].rotation = clockwise;
+        player->troopArr[i].approachPassed = 0;
         player->troopArr[i].index = i;
 
     }
@@ -172,7 +176,9 @@ int troopToBoard(int rollVal,Player *player,char *logArray[]){
             if(count > 0){
                 //block creation
                 if (opPlayer == player){
-                    blockCreation(troop,player->startingLocation);
+                    int pos = player->startingLocation;
+                    blockCreation(troop,pos,&board[pos]);
+                    calcBlockSpin(pos);
                     return 0;
                 }else{
                 //already checked if count == 1;
@@ -202,7 +208,7 @@ int troopToBoard(int rollVal,Player *player,char *logArray[]){
 //return 5 - Eliminated opponent
 
 int spin(Troop *troop){
-    if(troop->where){
+    if(troop->where == 1){
         troop->rotation = (coinFlip()) ? clockwise:counterClockwise;
     }
 }
@@ -223,6 +229,7 @@ Troop *nextTroop(Player *player){
             return &(player->troopArr[i]);
         }
     }
+    return NULL;
     
 
 }
@@ -231,24 +238,9 @@ int posCalc(int currentPos,int move,int direction){
     //if move is used to give direction too the return code can be simplified
 
     if(direction){
-        //counterclockwise
-        /*
-        if((currentPos-move) < 0){
-            return (currentPos-move) + boardLength;
-        }else{
-            return currentPos-move;
-        }*/
         return (currentPos-move+boardLength)%boardLength;       
         
     }else{
-        //clockwise
-        /*
-        if((currentPos+move)>=(boardLength)){
-            return (currentPos+move) - boardLength;
-        }else{
-            return currentPos+move;
-        }
-        */
         return (currentPos+move)%boardLength;
     }
 }
@@ -258,6 +250,7 @@ int troopReset(Troop *troop){
     (troop->owner->troopsAtPlay)--;
     troop->position = 0;
     troop->captures = 0;
+    troop->approachPassed = 0;
     troop->where = 0;
     troop->rotation = clockwise;
 }
@@ -320,18 +313,10 @@ int calcBlockSpin(int position){
 }
 
 //choose to dynammically alocate blocks due to the rarety of it and to save space
-void blockCreation(Troop *troop,int position){
+void blockCreation(Troop *troop,int position,Board *boardCell){
     //the count can't be 0;
-    int count = board[position].troopCount;
-    //debugging
-    if(board[position].troop->owner != troop->owner){
-        printf("Error: Troop owner and cell owner mismatch\n");
-        exit(1);
-    }
-    if(count == 0 || count == 4){
-        printf("Error: Full Block already exists or no troops in position\n");
-        exit(1);
-    }
+    //board[position]
+    int count = boardCell->troopCount;
 
     if(count == 1){
         Block *block = (Block *)malloc(sizeof(Block));
@@ -341,18 +326,17 @@ void blockCreation(Troop *troop,int position){
             exit(1);
         }
         block->troopArr[0] = board[position].troop;    
-        board[position].block = block;
+        boardCell->block = block;
     }
 
-    board[position].block->troopArr[count] = troop;
-    board[position].troopCount++;
-    calcBlockSpin(position);
-    updateBlockName(position);
+    boardCell->block->troopArr[count] = troop;
+    boardCell->troopCount++;
+    updateBlockName(position,boardCell);
 }
 
-void updateBlockName(int pos){
-    int count = board[pos].troopCount; 
-    Block *block = board[pos].block;
+void updateBlockName(int pos,Board *boardCell){
+    int count = boardCell->troopCount; 
+    Block *block = boardCell->block;
     int totalChar=0;
     for (short i = 0; i < count; i++){
         for (short j = 0; j < 2; j++){
@@ -401,7 +385,7 @@ void removeTroopCell(Troop *troop){
             blockDeletion(pos);
         }else{
             calcBlockSpin(pos);
-            updateBlockName(pos);
+            updateBlockName(pos,&board[pos]);
         }
 }
 
@@ -419,6 +403,7 @@ void blockDeletion(int position){
 
 
 int nextBlock(Troop *troop,int rollVal,int rotation){
+
     for (short i = 1; i <rollVal; i++){
             int nextPos = posCalc(troop->position,i,rotation);
             if(board[nextPos].block != NULL && ((board[nextPos].troop->owner) != (troop->owner))){
@@ -429,7 +414,20 @@ int nextBlock(Troop *troop,int rollVal,int rotation){
     return posCalc(troop->position,rollVal,rotation);
 }
 int movement(Troop *troop,int rollVal,char rotation,char *elimName[]){
-    if(!troop->where){
+
+    //null check is for blocking partial movements from troops moving as a block
+    if(elimName != NULL){
+        int logVal = isApproachPassed(troop,troop->position,rollVal,rotation);
+        if(!logVal){
+            approachPassed(troop,rollVal,rotation);
+            return 5;
+        }else if (logVal == 1){
+            troop->approachPassed += 1;
+        }
+        
+    }
+
+    if(!(troop->where == 1)){
         return 3;
     }
 
@@ -447,7 +445,8 @@ int movement(Troop *troop,int rollVal,char rotation,char *elimName[]){
 
         if(opPlayer == troop->owner){
             removeTroopCell(troop);
-            blockCreation(troop,newPos);
+            blockCreation(troop,newPos,&board[newPos]);
+            calcBlockSpin(newPos);
 
             if(elimName != NULL){
                 elimName[1] = board[newPos].block->name;
@@ -485,6 +484,7 @@ int movement(Troop *troop,int rollVal,char rotation,char *elimName[]){
 //return 2- player can't move/block infront or end.
 //return 3- player is in base
 //return 4- player eliminated someone
+//return 5- troop moved into the home straight 
 
 int blockMovement(Block *block, int rollVal,char *logArray[]){
     Troop *troop = block->troopArr[0];
@@ -495,6 +495,19 @@ int blockMovement(Block *block, int rollVal,char *logArray[]){
     int rotation = block->rotation;
 
     if(!rollVal){return 2;}
+
+    int logVal = isBlockApproachPassed(block,oldPos,rollVal);
+    if(!logVal){
+        for (short i = 0; i < count; i++){
+            approachPassed(block->troopArr[i],rollVal,rotation);
+        }
+        return 5;
+    }else if (logVal == 1){
+        for (short i = 0; i < count; i++){
+            block->troopArr[i]->approachPassed++;
+        }
+    }
+    
 
     int pos = nextBlock(troop,rollVal,block->rotation);
 
@@ -518,37 +531,92 @@ int blockMovement(Block *block, int rollVal,char *logArray[]){
     }
     return (chk);
 }
+//return 5 - block moved into the homestraight
 //return 4 - Can't move due to opponent before first encountering block
 //return 3 - can't move block in front
 //return 2 - not enough roll to move block
 //return 1 - eliminated;
 //return 0 - move sucessful 
 
-int approachPassed(Troop *troop,int rollVal,int isBlock){
+int troopToHome(){
 
-    int approachPos = troop->owner->approachLocation;
-    int troopPos = troop->position;
-    int newPos;
-    int longestRotat = lRotation(troopPos,approachPos);
-    if(isBlock){
-        newPos = posCalc(troopPos,rollVal,board[troopPos].block->rotation);
-    }else{
-        newPos = posCalc(troopPos,rollVal,troop->rotation);
-    }
-    int newLongestRotat = lRotation(newPos, approachPos);
-    if(longestRotat != newLongestRotat){
-        //Approach passed
-        Elimination(troop);
+};
 
-        
-
-
-    }
-    return 0;
-
+int approachDistance(int approachPos, int oldPos, int rotation){
+    int rotTemp = (rotation) ? -1:1;
+    return (rotTemp*(approachPos - oldPos) + boardLength)%boardLength;
 }
-//return 0- Approach was not passed
-//return 1- 
+
+//make sure to use the divised rollval when using for blocks
+int isApproachPassed(Troop *troop, int oldPos,int rollVal,int rotation){
+    int approachPos = troop->owner->approachLocation;
+
+    int oldDist = approachDistance(approachPos,oldPos,rotation);
+    rollVal = rollVal - (oldDist+1);
+    //int newDist = (rotTemp*(approachPos - newPos) + boardLength)%boardLength;
+
+    //try to use lrotation for computation like longest path rotation changes when passed?
+    //break if the rollVal is not enough
+    if (rollVal < 0){return 3;}
+    //check the cell after the approach 
+    int nextBlockPos = nextBlock(troop,oldDist,rotation);
+    if((nextBlockPos == posCalc(oldPos,oldDist,rotation)) &&
+       (board[nextBlockPos].block == NULL || board[nextBlockPos].troop->owner == troop->owner)){
+        //troop->approachPassed += 1;
+        if((troop->approachPassed - rotation) >= 0 && troop->captures){
+            return 0;
+        }
+        return 1;
+    }else{
+        return 2;
+    }
+}
+//return 0 - when passed
+//return 1 - not enough captures or approach passes
+//return 2 - block in between the path of the approach even though roll was enough
+//return 3 - rollValue not enough to pass approach
+
+void approachPassed(Troop *troop,int rollVal,int rotation){
+    rollVal = rollVal -(approachDistance(troop->owner->approachLocation,troop->position,rotation)) -1;
+
+        Elimination(troop);
+        rollVal = (rollVal > 4) ? 4:rollVal;
+        // if the roll is above 4 then the player will be stopped at 4 to play 1 to finish
+
+        Board *homeRow = &troop->owner->homeRow[rollVal];
+        troop->where = 2;
+        troop->position = rollVal;
+        if(homeRow->troopCount){
+            blockCreation(troop,rollVal,homeRow);
+        }else{
+            homeRow->troop = troop;
+            homeRow->troopCount = 1;
+        }
+}
+//return 1 - sucess
+//return 0 - not enough captures or passing of aproaches
+
+//only allowed if all troops in it have eliminated
+int isBlockApproachPassed(Block *block,int oldPos,int rollVal){
+
+    if(isApproachPassed(block->troopArr[0],oldPos,rollVal,block->rotation) >1){
+        return 2;
+    }
+
+    int count = board[block->troopArr[0]->position].troopCount;
+    for (short i = 0; i < count; i++){
+        Troop *troop = block->troopArr[i];
+        if((troop->approachPassed - troop->rotation) <0  && troop->captures == 0){
+            return 1;
+        }
+    }   
+    return 0;
+    
+}
+//return 0- The move is possible
+//return 1- One troop in the block hasn't captured an opponent// 
+//return 2- Not clear to pass meaning
+
 int isGameOver(Player *playerArray){
     int count=0;
     for(short i = 0; i<boardPlayers; i++){
@@ -602,6 +670,10 @@ int displayOptions(Player *player,int *optionArray,Block *block[],int rollVal){
     }
     //finding blocks
     for (short i = 0; i < playerTroops; i++){
+        if (player->troopArr[i].where != 1){
+            continue;
+        }
+        
         int pos = player->troopArr[i].position;
         Block *blockptr = board[pos].block;
         int chk = 1;
@@ -855,6 +927,7 @@ int game(Player *currentPlayer,int rollVal,int option,Block *block[]){
         logArray[0]=troop->name;
 
         int startingPos = troop->position;
+
         log = movement(troop,rollVal,troop->rotation,logArray);
 
         int endingPos = troop->position;
@@ -878,7 +951,7 @@ int game(Player *currentPlayer,int rollVal,int option,Block *block[]){
                 //goto invalidOption;
                 break;
             case 3:
-                printf("Color %s Player %s is still in base\n",currentPlayer->name,logArray[0]);
+                printf("Color %s Player %s is in base or homestraight\n",currentPlayer->name,logArray[0]);
                 //goto invalidOption;
                 break;
         }

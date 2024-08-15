@@ -10,11 +10,15 @@
 #define maxRollVal 6
 #define totalOptions 8
 #define maxBlockName 11
+#define counterClockwise 1
+#define clockwise 0
+#define endWinningSum 6 //1+2+3 
 
 typedef struct Board Board;
 typedef struct Player Player;
 typedef struct Troop Troop;
 typedef struct Block Block;
+
 
 struct Board{
     Troop *troop;
@@ -26,6 +30,7 @@ struct Block{
     char name[maxBlockName];
     Troop *troopArr[playerTroops];
     char rotation;
+    int approachPassed;
 };
 
 
@@ -35,8 +40,9 @@ struct Troop{
     int captures;
     char name[3];
     char where;
-    // 0 = not at base, 1 = at base, 2- in homerow
+    // 1 = not at base/in play, 0 = at base, 2- in homerow,3 - in home, 4 in home
     char rotation;
+    int approachPassed;
     int index;
 };
 
