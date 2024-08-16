@@ -34,7 +34,8 @@ void blockDeletion(int);
 int nextBlock(Troop *,int,int);
 int movement(Troop *,int,char,char *[]);
 int blockMovement(Block *, int,char *[]);
-int troopToHome();
+int canTroopToHome(Troop *,int);
+void troopToHome(Troop *);
 int approachDistance(int,int,int);
 int isApproachPassed(Troop *,int,int,int);
 void approachPassed(Troop *,int,int);
@@ -215,15 +216,7 @@ int spin(Troop *troop){
 
 
 Troop *nextTroop(Player *player){
-    int troopsNotAtBase = (player->troopsAtHome)+(player->troopsAtPlay);
-    //invalid name!!!
-    /*
-    if(troopsNotAtBase != playerTroops){
-        return &(player->troopArr[troopsNotAtBase]);
-    }
-    return NULL;
-    */
-    for (short i = 0; i <= troopsNotAtBase; i++){
+    for (short i = 0; i <= playerTroops; i++){
         //implment to check out winners or troops in home already
         if(player->troopArr[i].where == 0){
             return &(player->troopArr[i]);
@@ -231,7 +224,6 @@ Troop *nextTroop(Player *player){
     }
     return NULL;
     
-
 }
 
 int posCalc(int currentPos,int move,int direction){
@@ -416,6 +408,11 @@ int nextBlock(Troop *troop,int rollVal,int rotation){
 int movement(Troop *troop,int rollVal,char rotation,char *elimName[]){
 
     //null check is for blocking partial movements from troops moving as a block
+    if (!canTroopToHome(troop,rollVal)){
+        troopToHome(troop);
+        return 6;
+    }
+    
     if(elimName != NULL){
         int logVal = isApproachPassed(troop,troop->position,rollVal,rotation);
         if(!logVal){
@@ -485,6 +482,7 @@ int movement(Troop *troop,int rollVal,char rotation,char *elimName[]){
 //return 3- player is in base
 //return 4- player eliminated someone
 //return 5- troop moved into the home straight 
+//return 6- troop finished and is at home now.
 
 int blockMovement(Block *block, int rollVal,char *logArray[]){
     Troop *troop = block->troopArr[0];
@@ -495,6 +493,9 @@ int blockMovement(Block *block, int rollVal,char *logArray[]){
     int rotation = block->rotation;
 
     if(!rollVal){return 2;}
+    if(troop->where == 2){
+
+    }
 
     int logVal = isBlockApproachPassed(block,oldPos,rollVal);
     if(!logVal){
@@ -537,10 +538,22 @@ int blockMovement(Block *block, int rollVal,char *logArray[]){
 //return 2 - not enough roll to move block
 //return 1 - eliminated;
 //return 0 - move sucessful 
+int canTroopToHome(Troop *troop,int rollVal){
+    if(troop->where == 2 && rollVal == (homeRowLength -1) - troop->position){
+        return 0;
+    }
+    return 1;
+}
 
-int troopToHome(){
+void troopToHome(Troop *troop){
+    int pos = troop->position;
+    Player *owner = troop->owner;
+    int troopCount = owner->homeRow[pos].troopCount;
 
-};
+    troopReset(troop);
+    troop->where = 3;
+    owner->troopsAtHome++;
+}    
 
 int approachDistance(int approachPos, int oldPos, int rotation){
     int rotTemp = (rotation) ? -1:1;
@@ -549,6 +562,8 @@ int approachDistance(int approachPos, int oldPos, int rotation){
 
 //make sure to use the divised rollval when using for blocks
 int isApproachPassed(Troop *troop, int oldPos,int rollVal,int rotation){
+    if(troop->where != 1){return 4;}
+
     int approachPos = troop->owner->approachLocation;
 
     int oldDist = approachDistance(approachPos,oldPos,rotation);
@@ -575,6 +590,7 @@ int isApproachPassed(Troop *troop, int oldPos,int rollVal,int rotation){
 //return 1 - not enough captures or approach passes
 //return 2 - block in between the path of the approach even though roll was enough
 //return 3 - rollValue not enough to pass approach
+//return 4 - not at play
 
 void approachPassed(Troop *troop,int rollVal,int rotation){
     rollVal = rollVal -(approachDistance(troop->owner->approachLocation,troop->position,rotation)) -1;
@@ -587,7 +603,7 @@ void approachPassed(Troop *troop,int rollVal,int rotation){
         troop->where = 2;
         troop->position = rollVal;
         if(homeRow->troopCount){
-            blockCreation(troop,rollVal,homeRow);
+            blockCreation(troop,rollVal,&homeRow[rollVal]);
         }else{
             homeRow->troop = troop;
             homeRow->troopCount = 1;
@@ -658,7 +674,7 @@ int displayOptions(Player *player,int *optionArray,Block *block[],int rollVal){
         }
     }
     //troop to board
-    if(rollVal==maxRollVal && (player->troopsAtHome+player->troopsAtPlay) != 4){
+    if(rollVal==maxRollVal && (player->troopsAtHome+player->troopsAtPlay) < 4){
         optionArray[0] = 1;
         count++;
     }

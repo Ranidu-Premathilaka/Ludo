@@ -40,7 +40,7 @@ struct Troop{
     int captures;
     char name[3];
     char where;
-    // 1 = not at base/in play, 0 = at base, 2- in homerow,3 - in home, 4 in home
+    // 1 = not at base/in play, 0 = at base, 2- in homerow,3 - in home
     char rotation;
     int approachPassed;
     int index;
@@ -51,6 +51,7 @@ struct Player{
     Board homeRow[homeRowLength];
     int troopsAtPlay;
     int troopsAtHome;
+    int troopsAtBase;
     int index;
     int startingLocation;
     int approachLocation;
