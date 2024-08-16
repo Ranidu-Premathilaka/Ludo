@@ -18,7 +18,7 @@ int main(){
     
     while(isGameOver(playerArray)){
         playerTurn(count%boardPlayers);
-        printf("%d\n",count);
+        printf("-----------%d-----------\n",count);
         count++;
     }
 

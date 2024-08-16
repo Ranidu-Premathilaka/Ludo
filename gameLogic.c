@@ -98,6 +98,7 @@ void PlayerInit(Player *player,char *playerName){
     player->name= playerName;
     player->troopsAtPlay=0;
     player->troopsAtHome=0;
+    player->troopsAtBase=playerTroops;
     player->index = count;
     player->startingLocation = 13*count + 2; //posCalc(13*count,2,counterClockwise) if more than 4 players hehe;
     player->approachLocation = 13*count;
@@ -173,6 +174,7 @@ int troopToBoard(int rollVal,Player *player,char *logArray[]){
             troop->position=player->startingLocation;
             spin(troop);
             (player->troopsAtPlay)++;
+            (player->troopsAtBase)--;
 
             if(count > 0){
                 //block creation
@@ -240,6 +242,7 @@ int posCalc(int currentPos,int move,int direction){
 int troopReset(Troop *troop){
     board[troop->position].troopCount -= 1;
     (troop->owner->troopsAtPlay)--;
+    (troop->owner->troopsAtBase)++;
     troop->position = 0;
     troop->captures = 0;
     troop->approachPassed = 0;
@@ -549,8 +552,7 @@ void troopToHome(Troop *troop){
     int pos = troop->position;
     Player *owner = troop->owner;
     int troopCount = owner->homeRow[pos].troopCount;
-
-    troopReset(troop);
+    
     troop->where = 3;
     owner->troopsAtHome++;
 }    
@@ -595,7 +597,7 @@ int isApproachPassed(Troop *troop, int oldPos,int rollVal,int rotation){
 void approachPassed(Troop *troop,int rollVal,int rotation){
     rollVal = rollVal -(approachDistance(troop->owner->approachLocation,troop->position,rotation)) -1;
 
-        Elimination(troop);
+        removeTroopCell(troop);
         rollVal = (rollVal > 4) ? 4:rollVal;
         // if the roll is above 4 then the player will be stopped at 4 to play 1 to finish
 
@@ -674,7 +676,7 @@ int displayOptions(Player *player,int *optionArray,Block *block[],int rollVal){
         }
     }
     //troop to board
-    if(rollVal==maxRollVal && (player->troopsAtHome+player->troopsAtPlay) < 4){
+    if(rollVal==maxRollVal && player->troopsAtBase > 0){
         optionArray[0] = 1;
         count++;
     }
@@ -811,6 +813,7 @@ void playerTurn(int playerIndex){
         }
         
         rollVal = roll();
+        printf("%s rolls %d\n",playerArray[playerIndex].name,rollVal);
         if(streak == 3 && rollVal ==6){
             printf("Three concecutive 6's\n");
             int count = 0;
@@ -900,15 +903,11 @@ int game(Player *currentPlayer,int rollVal,int option,Block *block[]){
     int streak = 0;
     char *logArray[2];  //0- moved name,1- eliminated troop name
 
-
-    printf("%s rolls %d\n",currentPlayer->name,rollVal);
-     
-
     //some of the cases do not happen do to the functions above are implemented
     //remove them accordingly
     if(option == 0){
         log = troopToBoard(rollVal,currentPlayer,logArray);
-        int playersAtBase = playerTroops - (currentPlayer->troopsAtPlay+currentPlayer->troopsAtHome);
+        int playersAtBase = currentPlayer->troopsAtBase;
         switch (log){
             case 0:
                 printf("Block created on starting point. \n");
