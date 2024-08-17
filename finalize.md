@@ -5,7 +5,6 @@ if a block moves 3 times with rolling 6 consecutively
 
 need one captured to move to the homerow
 since the blocks are overpowered 
-:done
 
 if block or troop clockwise:
     needs to pass approach 1 times to go to homerow
@@ -25,6 +24,7 @@ can't have no pieces on it
 remain in the same cell for four rounds (16 counts)
     and reAppear
     can't be the same location consecutively
+:done
 
 if lands it chooses below options at random and teleport to it
 Mystery cell options

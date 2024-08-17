@@ -3,8 +3,6 @@
 int main(){
 
     int elapsedRounds=0;
-    int playerPosition = 1;
-    int max = 0;
     int count =0;
     int rollVal;
     
@@ -17,9 +15,12 @@ int main(){
     orderPrint(first,playerName);
     
     while(isGameOver(playerArray)){
+        count++;
         playerTurn(count%boardPlayers);
         printf("-----------%d-----------\n",count);
-        count++;
+        if (count%boardPlayers == 0){
+            elapsedRounds++;
+            //createMysteryCell(elapsedRounds);
+        }     
     }
-
 }

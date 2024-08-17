@@ -30,7 +30,7 @@ struct Block{
     char name[maxBlockName];
     Troop *troopArr[playerTroops];
     char rotation;
-    int approachPassed;
+    //int approachPassed;
 };
 
 
