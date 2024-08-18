@@ -552,6 +552,7 @@ char *directBlockMove(Block *block,int newPos, int log){
 
     int oldPos = block->troopArr[0]->position;
     if(log != 4){
+        if (log == 5){board[oldPos].troop->captures++;}
         directMove(board[oldPos].troop,newPos,6);
     }
     
@@ -897,7 +898,9 @@ void playerTurn(int playerIndex){
     }
 }
 
-//not unit tested
+//when a unique num is generated there can be a situation where the block isn't broken
+//cause the pattern makes the pieces blocked but the break is actually possible if
+//the pieces that move in the other is possible to move
 void blockBreak(int playerIndex,int count,Block *block[]){
     int choice = randBot(count,NULL);
     printf("Player Choose to break block %s \n",block[choice]->name);
