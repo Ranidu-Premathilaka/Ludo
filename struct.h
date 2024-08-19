@@ -13,6 +13,12 @@
 #define counterClockwise 1
 #define clockwise 0
 #define endWinningSum 6 //1+2+3 
+#define roundsBeforeMystery 2
+#define roundsMysteryReset 4
+
+#define bhawana 9
+#define kotuwa 27
+#define pitaKotuwa 46
 
 typedef struct Board Board;
 typedef struct Player Player;
@@ -30,7 +36,7 @@ struct Block{
     char name[maxBlockName];
     Troop *troopArr[playerTroops];
     char rotation;
-    //int approachPassed;
+    int mysteryEffect;
 };
 
 
@@ -43,7 +49,8 @@ struct Troop{
     // 1 = not at base/in play, 0 = at base, 2- in homerow,3 - in home
     char rotation;
     int approachPassed;
-    int index;
+    int index; //only used in break block can be redundent
+    int mysteryEffect;
 };
 
 struct Player{

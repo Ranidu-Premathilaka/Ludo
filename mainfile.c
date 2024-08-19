@@ -2,25 +2,30 @@
 
 int main(){
 
-    int elapsedRounds=0;
+    int elapsedRounds=-1;
     int count =0;
     int rollVal;
     
     char *playerName[4] = {"Yellow","Blue","Red","Green"};
     //2341
-    srand(2341);
+    srand(time(NULL));
     boardInit();
 
     int first = firstPlayer(playerName);
     orderPrint(first,playerName);
     
     while(isGameOver(playerArray)){
+        int index = count%boardPlayers;
         count++;
-        playerTurn(count%boardPlayers);
-        printf("-----------%d-----------\n",count);
-        if (count%boardPlayers == 0){
+
+        if (index == 0){
             elapsedRounds++;
-            //createMysteryCell(elapsedRounds);
-        }     
+            createMysteryCell(elapsedRounds);
+        } 
+
+        if(hasPlayerWon(index)){continue;}
+    
+        playerTurn(index);
+        printf("-----------%d-----------\n",count); 
     }
 }
