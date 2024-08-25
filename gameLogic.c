@@ -9,6 +9,7 @@ Board board[boardLength];
 Player playerArray[4];
 int globalMysteryCell = -1;
 int winnerPlacement = 0;
+int elapsedRounds=-1;
 //Block *blockArr[boardPlayers][maxBlocks];
 
 //to stop repeatedly typing struct 
@@ -17,6 +18,7 @@ int winnerPlacement = 0;
 
 
 //functiondef
+
 
 void PlayerInit(Player*,char*);
 void boardInit();
@@ -38,7 +40,7 @@ int nextBlock(Troop *,int,int);
 
 int canMove(Troop *,int ,int *);
 int canDirectMove(Troop *,int );
-char *directMove(Troop *,int ,int );
+char *directMove(Troop *,int ,int,int);
 int movement(Troop *,int ,char *[]);
 
 int canBlockMove(Block *,int ,int *);
@@ -63,11 +65,20 @@ void printBoard();
 void orderPrint(int,char *[]);
 void playerTurn(int );
 int game(Player *,int,int,Block *[]);
-void blockBreak(int,int,Block *[]);
+void createMysteryCell();
+void blockBreak(int, int, Block *[]);
 void genUniqueNum(int,int *);
 void printEnd(int );
-
-
+int mysteryCellOptions();
+void manageEffect(Player *);
+void mysteryCellEffect(int ,int );
+void mysteryLand(int, int ,char *,char *);
+int effectOption1(int );
+void effectOption2(int );
+int effectOption3(int );
+void effectOption4(int );
+int canForceMove(int ,int );
+int forceMove(int ,int,int );
 //Player
 void PlayerInit(Player *player,char *playerName){
     static int count = 0;
@@ -94,6 +105,8 @@ void PlayerInit(Player *player,char *playerName){
         player->troopArr[i].rotation = clockwise;
         player->troopArr[i].approachPassed = 0;
         player->troopArr[i].index = i;
+        player->troopArr[i].mysteryEffect[0] = 0;
+        player->troopArr[i].mysteryEffect[1] = 0;
 
     }
     for (short i = 0; i < homeRowLength; i++){
@@ -137,9 +150,9 @@ int coinFlip(){
 //return -7 - troop is blocked by opponent 
 int canTroopToBoard(int rollVal,Player *player,Troop **troopPtr){
     if(rollVal != maxRollVal){return -1;}
+    if(player->troopsAtBase == 0){return -2;}
 
     Troop *troop = nextTroop(player);
-    if(troop == NULL){return -2;}
     if(troopPtr != NULL){*troopPtr = troop;}
 
     return canDirectMove(troop,player->startingLocation);
@@ -157,7 +170,7 @@ int troopToBoard(int rollVal,Player *player,char *logArray[]){
         break;
 
     case -7:
-        logArray[1] = directMove(troop,player->startingLocation,log);
+        logArray[1] = directMove(troop,player->startingLocation,log,1);
 
     default:
         logArray[0] = troop->name;
@@ -167,72 +180,14 @@ int troopToBoard(int rollVal,Player *player,char *logArray[]){
         (player->troopsAtPlay)++;
         (player->troopsAtBase)--;
 
-        logArray[1] = directMove(troop,player->startingLocation,log);
+        logArray[1] = directMove(troop,player->startingLocation,log,1);
         break;
     }
 
+    return log;
+
 }
-//mappings 4 = -7
-// 0 = 4
-// 5 = 5
-// 1 = 6
-/*
-int troopToBoard(int rollVal,Player *player,char *logArray[]){
 
-    if(rollVal==maxRollVal){
-            Troop *troop = nextTroop(player);
-        if (troop != NULL){
-            logArray[0] = troop->name;
-
-            int count = board[player->startingLocation].troopCount;
-            Player *opPlayer = NULL;
-            if (count > 0){
-                opPlayer =board[player->startingLocation].troop->owner;
-            }
-            
-            
-            if(opPlayer != player && count > 1){
-                logArray[1] = board[player->startingLocation].block->name;
-                return 4;
-            }
-            
-            
-
-            if(count > 0){
-                //block creation
-                if (opPlayer == player){
-                    int pos = player->startingLocation;
-                    blockCreation(troop,pos,&board[pos]);
-                    board[pos].block->rotation = calcBlockSpin(pos);
-                    return 0;
-                }else{
-                //already checked if count == 1;
-                    logArray[1] = board[player->startingLocation].troop->name;
-                    Elimination(board[player->startingLocation].troop);
-                    troop->captures += 1;
-                    board[player->startingLocation].troopCount =1;
-                    board[player->startingLocation].troop = troop;
-                    return 5;
-                }
-            }else{
-                board[player->startingLocation].troop = troop;
-                board[player->startingLocation].troopCount = 1;
-
-                return 1;
-            }
-        }
-        return 2;
-    }
-    return 3;
-}
-//return 0 - Block Created
-//return 1 - successfully moved
-////////return 2 - All troops in board
-////////return 3 - Roll not a 6
-//return 4 - Blocked by opponent
-//return 5 - Eliminated opponent
-
-*/
 int spin(Troop *troop){
     if(troop->where == 1){
         troop->rotation = (coinFlip()) ? clockwise:counterClockwise;
@@ -241,7 +196,7 @@ int spin(Troop *troop){
 
 
 Troop *nextTroop(Player *player){
-    for (short i = 0; i <= playerTroops; i++){
+    for (short i = 0; i < playerTroops; i++){
         //implment to check out winners or troops in home already
         if(player->troopArr[i].where == 0){
             return &(player->troopArr[i]);
@@ -271,6 +226,9 @@ int troopReset(Troop *troop){
     troop->approachPassed = 0;
     troop->where = 0;
     troop->rotation = clockwise;
+    troop->mysteryEffect[0] = 0;
+    troop->mysteryEffect[1] = 0;
+    
 }
 
 //could be optimized to only have a pos parameter
@@ -345,6 +303,10 @@ void blockCreation(Troop *troop,int position,Board *boardCell){
             printf("Couldn't assign memory to block\n");
             exit(1);
         }
+
+        block->mysteryEffect[0] = 0;
+        block->mysteryEffect[1] = 0;
+
         block->troopArr[0] = boardCell->troop;    
         boardCell->block = block;
     }
@@ -436,6 +398,7 @@ int nextBlock(Troop *troop,int rollVal,int rotation){
 
 //use negative for unsuccessfull moves
 
+//return -4 - mystery cell blocked
 //return -2 - rollVal is 0
 //return 1 - can Move troop to home
 //return -1 - can't move troop
@@ -446,12 +409,15 @@ int nextBlock(Troop *troop,int rollVal,int rotation){
 //return 6 - troop moves freely without elimination
 //return -7 - troop is blocked by opponent 
 int canMove(Troop *troop,int rollVal,int *newPosPtr){
+
+    if(troop->mysteryEffect[0] == 3){return -4;}
+
     if(!rollVal){return -2;}
-    if(!canTroopToHome(troop,rollVal)){return 1;}
+    //if(!canTroopToHome(troop,rollVal)){return 1;}
 
     if(troop->where != 1 ){return -1;}
 
-    if(!isApproachPassed(troop,troop->position,rollVal,troop->rotation)){return 2;}
+    //if(!isApproachPassed(troop,troop->position,rollVal,troop->rotation)){return 2;}
 
     int newPos=nextBlock(troop,rollVal,troop->rotation);
     if(newPosPtr != NULL){*newPosPtr = newPos;}
@@ -465,7 +431,11 @@ int canMove(Troop *troop,int rollVal,int *newPosPtr){
 //return 5 - troop eliminates opponent troop
 //return 6 - troop moves freely without elimination
 //return -7 - troop is blocked by opponent 
+//return -8 - troop is already in position
 int canDirectMove(Troop *troop,int newPos){
+
+    if(troop->position == newPos){return -8;}
+
     if(board[newPos].troopCount){
 
         if(board[newPos].troop->owner == troop->owner){return 4;}
@@ -479,7 +449,7 @@ int canDirectMove(Troop *troop,int newPos){
 //return 5 - troop eliminates opponent troop
 //return 6 - troop moves freely without elimination
 //return -7 - troop is blocked by opponent 
-char *directMove(Troop *troop,int newPos,int log){
+char *directMove(Troop *troop,int newPos,int log,int mysteryCheck){
     char *ptr;
     switch (log){
     case 4:
@@ -510,7 +480,9 @@ char *directMove(Troop *troop,int newPos,int log){
         ptr = board[newPos].block->name;
         break;
     }
-
+    if(mysteryCheck){
+        mysteryLand(log,newPos,troop->owner->name,troop->name);
+    }
     return ptr;
 }
 
@@ -518,6 +490,8 @@ int movement(Troop *troop,int rollVal,char *logArray[]){
     int newPos;
     int log = canMove(troop,rollVal,&newPos);
     switch (log){
+    case -4:
+        break;
     case -2:
         break;
 
@@ -537,18 +511,18 @@ int movement(Troop *troop,int rollVal,char *logArray[]){
         break;
 
     case -7:
-        logArray[1] = directMove(troop,newPos,log);
+        logArray[1] = directMove(troop,newPos,log,1);
 
     default:
         removeTroopCell(troop,&board[troop->position]);
-        logArray[1] = directMove(troop,newPos,log);
+        logArray[1] = directMove(troop,newPos,log,1);
         break;
     }
     return log;
 }
 
 
-
+//return -2 - mysteryEffect can't move
 //return -1 - not enough roll
 //return 1 - can move Block to home
 //return 2 - block can move into home straight
@@ -557,7 +531,6 @@ int movement(Troop *troop,int rollVal,char *logArray[]){
 //return 5 - opponent block but count is the same thus eliminates
 //return -6 - opponent block but count is different thus can't move
 //return 7 - can move block freely
-
 int canBlockMove(Block *block,int rollVal,int *newPosPtr){
     Troop *troop = block->troopArr[0];
     int oldPos = troop->position;
@@ -565,11 +538,13 @@ int canBlockMove(Block *block,int rollVal,int *newPosPtr){
 
     rollVal = rollVal/count;
 
+    if(block->mysteryEffect[0] == 3){return -2;}
+
     if(!rollVal){return -1;}
 
-    if(!canTroopToHome(troop,rollVal)){return 1;}
+    //if(!canTroopToHome(troop,rollVal)){return 1;}
 
-    if(!isBlockApproachPassed(block,oldPos,rollVal)){return 2;}
+    //if(!isBlockApproachPassed(block,oldPos,rollVal)){return 2;}
 
     int newPos = nextBlock(troop,rollVal,block->rotation);
     if(newPosPtr != NULL){*newPosPtr = newPos;}
@@ -583,7 +558,11 @@ int canBlockMove(Block *block,int rollVal,int *newPosPtr){
 //return 5 - opponent block but count is the same thus eliminates
 //return -6 - opponent block but count is different thus can't move
 //return 7 - can move block freely
+//return -8 - block is already in new Position
 int canDirectMoveBlock(Block *block,int newPos){
+
+    if(block->troopArr[0]->position == newPos){return -8;}
+
     if(board[newPos].troopCount){
         if(board[newPos].troop->owner == block->troopArr[0]->owner ){return 4;}
         if(board[newPos].troopCount == board[block->troopArr[0]->position].troopCount){return 5;}
@@ -600,23 +579,36 @@ char *directBlockMove(Block *block,int newPos, int log){
     if (log == 5){Elimination(board[newPos].troop);}
 
     int oldPos = block->troopArr[0]->position;
+
+    int mysteryEffectTemp[mysteryLog];
+    if(block->mysteryEffect[0]){
+        mysteryEffectTemp[0] = block->mysteryEffect[0];
+        mysteryEffectTemp[1] = block->mysteryEffect[1];
+    }
+
     if(log != 4){
         if (log == 5){board[oldPos].troop->captures++;}
         Troop *troop = board[oldPos].troop;
         removeTroopCell(troop,&board[oldPos]);
-        directMove(troop,newPos,6);
-
+        directMove(troop,newPos,6,0);
     }
     
     int count = board[oldPos].troopCount;
     for (short i = 0; i < count; i++){
         Troop *troop = board[oldPos].troop;
         removeTroopCell(troop,&board[oldPos]);
-        directMove(troop,newPos,4);
+        directMove(troop,newPos,4,0);
         if (log == 5){troop->captures++;}
     }
 
+    if(block->mysteryEffect[0]){
+        board[newPos].block->mysteryEffect[0] = mysteryEffectTemp[0];
+        board[newPos].block->mysteryEffect[1] = mysteryEffectTemp[1];
+    }
+
     if (log == 5){return elimBlockName;}
+
+    mysteryLand(log,newPos,board[newPos].troop->owner->name,board[newPos].block->name);
 
 }
 
@@ -629,6 +621,8 @@ int blockMovement(Block *block,int rollVal, char *logArray[]){
     rollVal = rollVal/count;
 
         switch (log){
+        case -2:
+            break;
         case -1:
             break;
 
@@ -777,13 +771,38 @@ int isGameOver(Player *playerArray){
     //2.Move standard board peices(2.1-R1,2.2-R2)
     //3.Move block
 
+int realRollVal(void *ptr,int isBlock,int rollVal){
+
+    int mysteryVal;
+    if(isBlock){
+        Block *block = (Block *)ptr;
+        mysteryVal =block->mysteryEffect[0];
+    }else{
+        Troop *troop = (Troop *)ptr;
+        mysteryVal =troop->mysteryEffect[0];
+    }
+
+    switch(mysteryVal){
+        case 1:
+            return rollVal*2;
+            break;
+        case 2:
+            return rollVal/2;
+            break;
+        default:
+            return rollVal;
+            break;
+    }
+}
+
 int optionFinder(Player *player,int *optionArray,Block *block[],int rollVal){
     int optionCount = 0;
 
     //find which troops can make a valid move
     for (short i = 0; i < playerTroops; i++){
         Troop *troop = &player->troopArr[i];
-        int log = canMove(troop,rollVal,NULL);
+        int tmpRollVal = realRollVal(troop,0,rollVal);
+        int log = canMove(troop,tmpRollVal,NULL);
         if(log > 0){
             optionArray[i+1] = log;
             optionCount++;
@@ -791,7 +810,7 @@ int optionFinder(Player *player,int *optionArray,Block *block[],int rollVal){
     }
 
     //troop to board
-    if(rollVal==maxRollVal && player->troopsAtBase > 0){
+    if(canTroopToBoard(rollVal,player,NULL) > 0){
         optionArray[0] = 1;
         optionCount++;
     }
@@ -800,7 +819,8 @@ int optionFinder(Player *player,int *optionArray,Block *block[],int rollVal){
     int blockCount=blockFinder(player,block);
 
     for (short i = 0; i < blockCount; i++){
-        int log = canBlockMove(block[i],rollVal,NULL);
+        int tmpRollVal = realRollVal(block[i],1,rollVal);
+        int log = canBlockMove(block[i],tmpRollVal,NULL);
         if(log > 0){
             optionArray[i+5] = log;
             optionCount++;
@@ -931,6 +951,7 @@ void playerTurn(int playerIndex){
     printf("%s rolls %d\n",playerArray[playerIndex].name,rollVal);
 
     while (1){
+
         int optionArray[totalOptions]={0};
  
         int optionAmount =optionFinder(&playerArray[playerIndex],optionArray,block,rollVal);
@@ -963,6 +984,8 @@ void playerTurn(int playerIndex){
         }
 
     }
+
+    manageEffect(&playerArray[playerIndex]);
 }
 
 //when a unique num is generated there can be a situation where the block isn't broken
@@ -1079,6 +1102,7 @@ int game(Player *currentPlayer,int rollVal,int option,Block *block[]){
         logArray[0]=troop->name;
 
         int startingPos = troop->position;
+        rollVal = realRollVal(troop,0,rollVal);
         log = movement(troop,rollVal,logArray);
         endingPos = troop->position;
 
@@ -1113,6 +1137,7 @@ int game(Player *currentPlayer,int rollVal,int option,Block *block[]){
                 break;
             case 4:
                 printf("Created a Block %s on L%d\n",logArray[1],endingPos);
+                break;
             case 5:
                 printf("Eliminated %s\n",logArray[1]);
                 logCode = 1;
@@ -1137,6 +1162,8 @@ int game(Player *currentPlayer,int rollVal,int option,Block *block[]){
         troop = currentBlock->troopArr[0];
 
         int startingPos = currentBlock->troopArr[0]->position;
+
+        rollVal = realRollVal(currentBlock,1,rollVal);
         log = blockMovement(currentBlock,rollVal,logArray);
         endingPos =troop->position;
 
@@ -1198,16 +1225,31 @@ int game(Player *currentPlayer,int rollVal,int option,Block *block[]){
     printf("Color %s Turn skipped \n",currentPlayer->name);
 }
 
-if(endingPos == globalMysteryCell && log > 3){
-    printf("Color %s landed %s on A mysteryCell!\n",currentPlayer->name,troop->name);
-    int choice = mysteryCellOptions();
-    mysteryCellEffect(choice,endingPos);
-}
-
+//mysteryLand(log,endingPos,currentPlayer->name,logArray[0]);
 return logCode;
 }
 
-void createMysteryCell(int elapsedRounds){
+void mysteryLand(int log, int endingPos,char *name,char *troop){
+    if(log > 3 && endingPos == globalMysteryCell){
+        printf("Color %s landed %s on A mysteryCell!\n",name,troop);
+        int choice = mysteryCellOptions(board[endingPos].troop->owner);
+        mysteryCellEffect(choice,endingPos);
+    }
+}
+
+void mysteryLand(){
+    
+    if(board[globalMysteryCell].troopCount){
+        char *name = board[globalMysteryCell].troop->owner->name;
+        char *troop = (board[globalMysteryCell].troopCount > 1) ? (board[globalMysteryCell].block->name) : board[globalMysteryCell].troop->name;
+        int endingPos = board[globalMysteryCell].troop->position;
+        printf("Color %s landed %s on A mysteryCell!\n",name,troop);
+        int choice = mysteryCellOptions(board[globalMysteryCell].troop->owner);
+        mysteryCellEffect(choice,endingPos);
+    }
+}
+
+void createMysteryCell(){
     if ((elapsedRounds-roundsBeforeMystery)%roundsMysteryReset == 0){
         int mysteryCell;
         while(1){
@@ -1220,13 +1262,39 @@ void createMysteryCell(int elapsedRounds){
     }
 }
 
-//use inline keyword for optimizations?
-int mysteryCellOptions(){
-    return roll();
+int mysteryCellOptions(Player *player){
+        return roll();
 }
+//use inline keyword for optimizations?
+/*
+int mysteryCellOptions(Player *player){
+    int newPos[6] = {bhawana,kotuwa,pitaKotuwa,-1,player->startingLocation,player->approachLocation};
+    while(1){
+        int choice = roll();
+        if(globalMysteryCell != newPos[choice-1]){
+            return choice;
+        }
+        printf("Teleported back in the mystery cell\n");
+    }
+}
+*/
+void manageEffect(Player *player){
+    for(short i = 0; i < playerTroops; i++){
+        if (elapsedRounds - (player->troopArr[i].mysteryEffect[1]) == effectDuration ){
+            player->troopArr[i].mysteryEffect[0] = 0;
+            //player->troopArr[i].mysteryEffect[1] = 0;
+        } 
+    }
 
-int effectManage(){
-    
+    Block *block[maxBlocks];
+    int blockCount = blockFinder(player,block);
+
+    for(short i = 0; i < blockCount; i++){
+        if (elapsedRounds - (block[i]->mysteryEffect[1]) == effectDuration ){
+            block[i]->mysteryEffect[0] = 0;
+            //block[i]->mysteryEffect[1] = 0;   
+        } 
+    }
 }
 
 void mysteryCellEffect(int option,int pos){
@@ -1234,66 +1302,108 @@ void mysteryCellEffect(int option,int pos){
 //but switches are optimized to jump in most compilers
 //thus for readablity since it's only 6 cases switches
 //are chosen
-    int newPos;
+
+//if the move isn't possible they stay in mysterycell untill moved 
+//or another troop lands on it and makes a block which the mystery effect is acted on both
+
+    int newPos,log=0;
+    int count = board[pos].troopCount;
+    char *multiple = (count>1) ? "s are":" is";
+    
+    printf("Player randomly selected Option: ");
     switch (option){
     case 1:
+        printf("Bhawana\n");
         newPos = bhawana;
-        int log = forceMove(pos,newPos);
+        log = canForceMove(pos,newPos);
         if(log >0){
-            effectOption1();
+            printf("piece%s teleported into bhawana \n",multiple);
+
+            char *effect = (effectOption1(pos) == 1) ? "energized":"sick";
+            printf("Pieces got %s\n",effect);
+            forceMove(pos,newPos,log);
         }
         break;
 
     case 2:
+        printf("Kotuwa\n");
         newPos = kotuwa;
-        int log = forceMove(pos,newPos);
+        log = canForceMove(pos,newPos);
         if(log >0){
-            effectOption2();
+            printf("piece%s teleported into kotuwa \n",multiple);
+            effectOption2(pos);
+            forceMove(pos,newPos,log);
         }
         break;
 
     case 3:
+        printf("Pita Kotuwa\n");
         newPos = pitaKotuwa;
-        int log = forceMove(pos,newPos);
+        log = canForceMove(pos,newPos);
         if(log >0){
-            effectOption3(pos);
+            printf("piece%s teleported into pita Kotuwa \n",multiple);
+
+            if(effectOption3(pos)){
+                forceMove(pos,newPos,log);
+            }
         }
         break;
 
     case 4:
+        printf("To Base\n");
+        printf("Piece%s teleported back to Base.\n",multiple);
         effectOption4(pos);
-        printf("Piece sent back to Base.\n");
         break;
 
     case 5:
+        printf("To Starting Position\n");
         newPos = board[pos].troop->owner->startingLocation;
-        forceMove(pos,newPos);
+        log = canForceMove(pos,newPos);
+        if(log>0){
+            printf("Piece%s teleported back to starting Position s.\n",multiple);
+            forceMove(pos,newPos,log);
+        }
         break;
 
     case 6:
+        printf("To Starting Position\n");
         newPos = board[pos].troop->owner->approachLocation;
-        forceMove(pos,newPos);
+        log = canForceMove(pos,newPos);
+        if(log>0){
+            printf("Price%s teleported to player approach.\n",multiple);
+            forceMove(pos,newPos,log);
+        }
         break;
     }
-
- 
-}
-
-void effectOption1(int pos){
-//bhawana (9th)
-    if(board[pos].troopCount > 1){
-
-    }else{
-
+    if(log < 0){
+        printf("Teleportation Not Possible. Mystery Cell Move ignored.\n");
     }
 
-
 }
-void effectOption2(){
+
+int effectOption1(int pos){
+//bhawana (9th)
+    int randEffect = coinFlip() + 1;
+    if(board[pos].troopCount > 1){
+        board[pos].block->mysteryEffect[0] = randEffect;
+        board[pos].block->mysteryEffect[1] = elapsedRounds;
+    }else{
+        board[pos].troop->mysteryEffect[0] = randEffect;
+        board[pos].troop->mysteryEffect[1] = elapsedRounds;
+    }
+    return randEffect;
+}
+void effectOption2(int pos){
 //koduwa (27th)
-
+    if(board[pos].troopCount > 1){
+        board[pos].block->mysteryEffect[0] = 3;
+        board[pos].block->mysteryEffect[1] = elapsedRounds;
+    }else{
+        board[pos].troop->mysteryEffect[0] = 3;
+        board[pos].troop->mysteryEffect[1] = elapsedRounds;
+    }
 }
-void effectOption3(int pos){
+int effectOption3(int pos){
 //Pita-kotuwa (46th)
     char *rotation;
     if(board[pos].troopCount > 1){
@@ -1302,13 +1412,16 @@ void effectOption3(int pos){
         rotation = &board[pos].troop->rotation;
     }
 
-    if(*rotation == clockwise){
-        *rotation = counterClockwise;
-    }else{
-        int log = forceMove(pos,kotuwa);
+    if(*rotation){
+        int log = canForceMove(pos,kotuwa);
         if(log >0){
-            effectOption2();
+            effectOption2(pos);
+            forceMove(pos,kotuwa,log);
+            return 0;
         }
+    }else{
+        *rotation = counterClockwise;
+        return 1;
     }
 }
 void effectOption4(int pos){
@@ -1316,19 +1429,22 @@ void effectOption4(int pos){
     Elimination(board[pos].troop);
 }
 
-int forceMove(int pos,int endingPos){
-//to starting position or approach 
-    int log;
+int canForceMove(int pos,int endingPos){
     if(board[pos].troopCount > 1){
-        log = canDirectMoveBlock(board[pos].block,endingPos);
-        if(log>0){
-            directBlockMove(board[pos].block,endingPos,log);
-        }
+        return canDirectMoveBlock(board[pos].block,endingPos);
     }else{
-        log = canDirectMove(board[pos].troop,endingPos);
-        if(log>0){
-            directMove(board[pos].troop,endingPos,log);
-        }
+        return canDirectMove(board[pos].troop,endingPos);
+    }
+}
+
+int forceMove(int pos,int endingPos,int log){
+//to starting position or approach 
+    if(board[pos].troopCount > 1){
+        directBlockMove(board[pos].block,endingPos,log);
+    }else{
+        Troop *troop = board[pos].troop;
+        removeTroopCell(troop,&board[pos]);
+        directMove(troop,endingPos,log,1);
     }
     return log;
 }

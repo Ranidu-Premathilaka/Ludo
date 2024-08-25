@@ -15,6 +15,8 @@
 #define endWinningSum 6 //1+2+3 
 #define roundsBeforeMystery 2
 #define roundsMysteryReset 4
+#define effectDuration 4 
+#define mysteryLog 2
 
 #define bhawana 9
 #define kotuwa 27
@@ -36,9 +38,13 @@ struct Block{
     char name[maxBlockName];
     Troop *troopArr[playerTroops];
     char rotation;
-    int mysteryEffect;
+    int mysteryEffect[mysteryLog];
 };
-
+//second element is roundNum; 
+//mysteryEffect 0 - no effect
+//mysteryEffect 1 - energized
+//mysteryEffect 2 - sick
+//mysteryEffect 3 - can't move
 
 struct Troop{
     Player *owner;
@@ -50,7 +56,7 @@ struct Troop{
     char rotation;
     int approachPassed;
     int index; //only used in break block can be redundent
-    int mysteryEffect;
+    int mysteryEffect[mysteryLog];
 };
 
 struct Player{

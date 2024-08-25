@@ -2,13 +2,12 @@
 
 int main(){
 
-    int elapsedRounds=-1;
     int count =0;
     int rollVal;
     
     char *playerName[4] = {"Yellow","Blue","Red","Green"};
     //2341
-    srand(time(NULL));
+    srand(2341);
     boardInit();
 
     int first = firstPlayer(playerName);
@@ -20,7 +19,7 @@ int main(){
 
         if (index == 0){
             elapsedRounds++;
-            createMysteryCell(elapsedRounds);
+            createMysteryCell();
         } 
 
         if(hasPlayerWon(index)){continue;}
