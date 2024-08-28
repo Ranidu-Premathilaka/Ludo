@@ -5,16 +5,14 @@ int main(){
     int rollVal;
     
     char *playerName[4] = {"Yellow","Blue","Red","Green"};
-    //2341
-    srand(time(NULL));
+
+    srand(1724843095);
     boardInit();
 
     int first = firstPlayer(playerName);
     orderPrint(first,playerName);
     allPlayerInit(playerName);
     int count = first;
-
-//for inside a while loop?
 
     while(isGameOver(playerArray)){
         int index = count%boardPlayers;

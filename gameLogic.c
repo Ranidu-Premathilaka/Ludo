@@ -379,7 +379,9 @@ void removeTroopCell(Troop *troop,Board *boardCell){
         if(boardCell->troopCount == 1){
             blockDeletion(boardCell);
         }else{
-            boardCell->block->rotation = calcBlockSpin(pos);
+            if(troop->where == 1){
+                boardCell->block->rotation = calcBlockSpin(pos);
+            }
             updateBlockName(pos,boardCell);
         }
 }
@@ -951,19 +953,8 @@ void playerTurn(int playerIndex){
         int optionArray[totalOptions]={0};
  
         int optionAmount =optionFinder(&playerArray[playerIndex],optionArray,block,rollVal);
-        //displayOptionArray(optionArray);
+        displayOptionArray(optionArray);
         option = botArray[playerIndex](&playerArray[playerIndex],rollVal,optionArray,block);
-        //option = randBot(optionAmount,optionArray);
-        int chk = 1;
-        for (size_t i = 0; i < totalOptions; i++){
-            if(optionArray[option]){
-                chk = 0;
-            }
-        }
-        if(chk){
-            exit(1);
-        }
-
 
         logCode = game(&playerArray[playerIndex],rollVal,option,block);
 
@@ -1476,31 +1467,37 @@ int randBot(int *optionArray,int restriction){
 }
 
 int redBot(Player *player,int rollVal,int *optionArray,Block *block[]){
-    int count = 0;
-    int option;
-
+    int option = 0;
+    int minApproachDst = 100;
+    
+    //closest to eliminate
     for(short i = 1; i < 7; i++){
         if(optionArray[i] == 5){
-            if(count){
-                int troop1Rotation = (option > 4) ? block[option-5]->rotation:player->troopArr[option -1].rotation;
-                int troop2Rotation = (i > 4) ? block[i-5]->rotation:player->troopArr[i -1].rotation;
-                Troop *troop1 = board[posCalc(player->troopArr[option -1].position,rollVal,troop1Rotation)].troop;
-                Troop *troop2 = board[posCalc(player->troopArr[i -1].position,rollVal,troop2Rotation)].troop;
-                int approachDist1 = approachDistance(troop1->owner->approachLocation,troop1->position,troop1Rotation);
-                int approachDist2 = approachDistance(troop2->owner->approachLocation,troop2->position,troop2Rotation);
-
-                if(approachDist1 > approachDist2){
-                    option = i;
-                }
+            Troop *troop;
+            int pos,rotation;
+            if(i>4){
+                troop = block[i-5]->troopArr[0];
+                rotation = block[i-5]->rotation;
+                rollVal = realRollVal(block[i-5],1,rollVal);
             }else{
-                option = i;
+                troop = &player->troopArr[i-1];
+                rotation = player->troopArr[i-1].rotation;
+                rollVal = realRollVal(&player->troopArr[i-1],0,rollVal);
             }
+            
+            troop = board[nextBlock(troop,rollVal,rotation)].troop;
+            rotation = (board[troop->position].troopCount > 1) ? board[troop->position].block->rotation:troop->rotation;
+            int approachDst = approachDistance(troop->owner->approachLocation,troop->position,rotation);
 
-            count++;
+            if(minApproachDst > approachDst){
+                option = i;
+                minApproachDst = approachDst;
+            }
         }
 
     }
-    if(count){return option;}
+
+    if(option){return option;}
 
     if(optionArray[0]){return 0;}
 
@@ -1512,7 +1509,10 @@ int greenBot(Player *player,int rollVal,int *optionArray,Block *block[]){
     char captureCount = 0;
     int option;
     for(short i = 1; i<5; i++){
+        //troop make block
         if(optionArray[i] == 4){return i;}
+
+        //troop to capture
         if(optionArray[i] == 5){
             if(!captureCount){
                 option = i;
@@ -1521,7 +1521,7 @@ int greenBot(Player *player,int rollVal,int *optionArray,Block *block[]){
             if(!player->troopArr[i-1].captures){option = i;}
         }
     }
-    if(optionArray[0]){return 1;}
+    if(optionArray[0]){return 0;}
     if(captureCount){return option;}
 
     for(short i = 0; i < maxBlocks; i++){
@@ -1565,8 +1565,17 @@ int yellowBot(Player *player,int rollVal,int *optionArray,Block *block[]){
         
     }
     
-    //capture blocks are prioritized
     for(short i=0;i<maxBlocks; i++ ){
+        //closest blocks are prioritized
+        if(optionArray[i+5]){
+            closestCount++;
+            int tempDist = approachDistance(player->approachLocation,block[i]->troopArr[0]->position,block[i]->rotation);
+            if(minApproachDist > tempDist){
+                minApproachDist = tempDist;
+                closestOption = i+5;
+            }
+        }
+        //capture blocks are prioritized
         if(optionArray[i+5] == 5){captureOption = i+5;}
     }
 
@@ -1577,9 +1586,9 @@ int yellowBot(Player *player,int rollVal,int *optionArray,Block *block[]){
 }
 
 int blueBot(Player *player,int rollVal,int *optionArray,Block *block[]){
-    static int prevIndex = -1;
+    static int prevIndex = 0;
     int range = prevIndex + totalOptions;
-    for (short i = prevIndex+1; i < range; i++){
+    for (short i = prevIndex+1; i <= range; i++){
         int x = i%totalOptions;
         if(optionArray[x]){
             if(x >0 && x<7){prevIndex = x;}
