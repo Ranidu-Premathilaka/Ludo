@@ -10,6 +10,7 @@ Player playerArray[4];
 int globalMysteryCell = -1;
 int winnerPlacement = 0;
 int elapsedRounds=-1;
+
 //Block *blockArr[boardPlayers][maxBlocks];
 
 //to stop repeatedly typing struct 
@@ -60,7 +61,7 @@ int isGameOver(Player *);
 int optionFinder(Player *,int *,Block *[],int );
 int blockFinder(Player *,Block *[]);
 int firstPlayer(char *[]);
-int randBot(int ,int *);
+int randBot(int *,int);
 void printBoard();
 void orderPrint(int,char *[]);
 void playerTurn(int );
@@ -81,6 +82,17 @@ void effectOption4(int );
 int canForceMove(int ,int );
 int forceMove(int ,int,int );
 //Player
+//Bot
+int redBot(Player *,int ,int *,Block *[]);
+int greenBot(Player *,int ,int *,Block *[]);
+int yellowBot(Player *,int ,int *,Block *[]);
+int blueBot(Player *,int ,int *,Block *[]);
+
+
+typedef int (*Bot)(Player *,int ,int *,Block *[]);
+Bot botArray[] = {yellowBot,blueBot,redBot,greenBot};
+
+
 void PlayerInit(Player *player,char *playerName){
     static int count = 0;
     //this can be an issue if restarting the game
@@ -895,19 +907,22 @@ int firstPlayer(char *playerName[]){
 
 }
 
+void allPlayerInit(char *playerName[]){
+    for (int i = 0; i<boardPlayers; i++){
+        PlayerInit(&playerArray[i],playerName[i]);
+    }
+}
+
 void orderPrint(int first,char *playerName[]){
     printf("%s has the highest roll and will begin the game.\n",playerName[first]);
     printf("The order of a single round is ");
     int range = boardPlayers+first;
     for (short i = first; i <range ; i++){
         int x = i % boardPlayers;
-        int cnt = i-first;
-        PlayerInit(&playerArray[cnt],playerName[x]);
-
         if(i+1 == range){
-            printf("and %s\n",playerArray[cnt].name);
+            printf("and %s\n",playerName[x]);
         }else{
-            printf("%s, ",playerArray[cnt].name);
+            printf("%s, ",playerName[x]);
         }
     }
 }
@@ -917,31 +932,6 @@ void displayOptionArray(int optionArray[]){
         printf("%d\t",optionArray[i]);
     }
     printf("\n");
-}
-
-int randBot(int optionAmount,int *optionArray){
-    /*
-    if(optionAmount==1 ){
-        //skip turn done separately for efficency
-        return 7;
-    } */
-    //processes when option amount is larger
-    //same probability
-    int randomVal = rand()%optionAmount;
-
-    //choose what block to break
-    if(optionArray == NULL){
-        return randomVal;
-    }
-
-    int count = 0;
-    for (int i = 0; i < totalOptions; i++){
-        if(optionArray[i]){
-            if(count == randomVal){return i;}
-            count++;
-        }
-    }
-
 }
 
 
@@ -962,7 +952,17 @@ void playerTurn(int playerIndex){
  
         int optionAmount =optionFinder(&playerArray[playerIndex],optionArray,block,rollVal);
         //displayOptionArray(optionArray);
-        option = randBot(optionAmount,optionArray);
+        option = botArray[playerIndex](&playerArray[playerIndex],rollVal,optionArray,block);
+        //option = randBot(optionAmount,optionArray);
+        int chk = 1;
+        for (size_t i = 0; i < totalOptions; i++){
+            if(optionArray[option]){
+                chk = 0;
+            }
+        }
+        if(chk){
+            exit(1);
+        }
 
 
         logCode = game(&playerArray[playerIndex],rollVal,option,block);
@@ -999,7 +999,7 @@ void playerTurn(int playerIndex){
 //cause the pattern makes the pieces blocked but the break is actually possible if
 //the pieces that move in the other is possible to move
 void blockBreak(int playerIndex,int count,Block *block[]){
-    int choice = randBot(count,NULL);
+    int choice = rand()%count;
     printf("Player Choose to break block %s \n",block[choice]->name);
 
     int pos = block[choice]->troopArr[0]->position;
@@ -1462,3 +1462,128 @@ int forceMove(int pos,int endingPos,int log){
     return log;
 }
 
+int randBot(int *optionArray,int restriction){
+    int randVal = rand()%totalOptions;
+    int range = randVal + totalOptions;
+    int option = -1;
+    for (short i = randVal; i < range; i++){
+        int x = i%totalOptions;
+        if(option == -1 && optionArray[x]){option = x;}
+        if(optionArray[x] == restriction || optionArray[x]==0){continue;}
+        return x;
+    }
+    return option;
+}
+
+int redBot(Player *player,int rollVal,int *optionArray,Block *block[]){
+    int count = 0;
+    int option;
+
+    for(short i = 1; i < 7; i++){
+        if(optionArray[i] == 5){
+            if(count){
+                int troop1Rotation = (option > 4) ? block[option-5]->rotation:player->troopArr[option -1].rotation;
+                int troop2Rotation = (i > 4) ? block[i-5]->rotation:player->troopArr[i -1].rotation;
+                Troop *troop1 = board[posCalc(player->troopArr[option -1].position,rollVal,troop1Rotation)].troop;
+                Troop *troop2 = board[posCalc(player->troopArr[i -1].position,rollVal,troop2Rotation)].troop;
+                int approachDist1 = approachDistance(troop1->owner->approachLocation,troop1->position,troop1Rotation);
+                int approachDist2 = approachDistance(troop2->owner->approachLocation,troop2->position,troop2Rotation);
+
+                if(approachDist1 > approachDist2){
+                    option = i;
+                }
+            }else{
+                option = i;
+            }
+
+            count++;
+        }
+
+    }
+    if(count){return option;}
+
+    if(optionArray[0]){return 0;}
+
+    return randBot(optionArray,4);
+}
+
+
+int greenBot(Player *player,int rollVal,int *optionArray,Block *block[]){
+    char captureCount = 0;
+    int option;
+    for(short i = 1; i<5; i++){
+        if(optionArray[i] == 4){return i;}
+        if(optionArray[i] == 5){
+            if(!captureCount){
+                option = i;
+                captureCount++;
+            }
+            if(!player->troopArr[i-1].captures){option = i;}
+        }
+    }
+    if(optionArray[0]){return 1;}
+    if(captureCount){return option;}
+
+    for(short i = 0; i < maxBlocks; i++){
+        if(optionArray[i+5]){return i+5;}
+    }
+
+    return randBot(optionArray,-1);
+
+}
+
+int yellowBot(Player *player,int rollVal,int *optionArray,Block *block[]){
+
+    if(optionArray[0]){return 0;}
+
+    int captureOption;
+    int closestOption;
+    char captureCount = 0;
+    char closestCount = 0;
+    int minApproachDist = 100;
+
+
+    for (short i = 1; i < 5; i++){
+        //best possible capture peice
+        if(optionArray[i] == 5 && (!captureCount || !player->troopArr[i-1].captures)){
+            captureOption = i;
+            captureCount++;
+        }
+        
+        //can move into the homestaight
+        if(optionArray[i] == 1 || optionArray[i] == 2){return i;}
+
+        //move closest to the approach
+        if(optionArray[i]){
+            closestCount++;
+            int tempDist = approachDistance(player->approachLocation,player->troopArr[i-1].position,player->troopArr[i-1].rotation);
+            if(minApproachDist > tempDist){
+                minApproachDist = tempDist;
+                closestOption = i;
+            }
+        }
+        
+    }
+    
+    //capture blocks are prioritized
+    for(short i=0;i<maxBlocks; i++ ){
+        if(optionArray[i+5] == 5){captureOption = i+5;}
+    }
+
+    if(captureCount){return captureOption;}
+    if(closestCount){return closestOption;}
+
+    randBot(optionArray,-1);
+}
+
+int blueBot(Player *player,int rollVal,int *optionArray,Block *block[]){
+    static int prevIndex = -1;
+    int range = prevIndex + totalOptions;
+    for (short i = prevIndex+1; i < range; i++){
+        int x = i%totalOptions;
+        if(optionArray[x]){
+            if(x >0 && x<7){prevIndex = x;}
+            return x;
+        }
+    }
+}
