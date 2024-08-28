@@ -1,5 +1,6 @@
-#include "gameLogic.c"
-//doesn't need struct.h
+#include <time.h>
+#include "gameLogic.h"
+
 int main(){
 
     int rollVal;
@@ -14,12 +15,11 @@ int main(){
     allPlayerInit(playerName);
     int count = first;
 
-    while(isGameOver(playerArray)){
+    while(isGameOver()){
         int index = count%boardPlayers;
         count++;
 
         if (index == first){
-            elapsedRounds++;
             createMysteryCell();
         } 
 

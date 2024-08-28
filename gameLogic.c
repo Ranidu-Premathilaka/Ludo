@@ -1,97 +1,15 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include "struct.h"
-//#include "functions.h"
+#include "gameLogic.h"
 
-
+//GLOBALS (should be in separate file)
 Board board[boardLength];
 Player playerArray[4];
 int globalMysteryCell = -1;
 int winnerPlacement = 0;
 int elapsedRounds=-1;
 
-//Block *blockArr[boardPlayers][maxBlocks];
-
-//to stop repeatedly typing struct 
-//Posibility of Null pointarray dereferencing
-//turn char methods into int not worth it
-
-
-//functiondef
-
-
-void PlayerInit(Player*,char*);
-void boardInit();
-int roll();
-int coinFlip();
-int troopToBoard(int ,Player *,char *[]);
-int spin(Troop *);
-Troop *nextTroop(Player *);
-int posCalc(int,int,int);
-int troopReset(Troop *);
-int Elimination(Troop *);
-int lRotation(int ,int );
-int calcBlockSpin(int);
-void blockCreation(Troop *,int,Board *);
-void updateBlockName(int,Board *);
-void removeTroopCell(Troop *,Board *);
-void blockDeletion(Board *);
-int nextBlock(Troop *,int,int);
-
-int canMove(Troop *,int ,int *);
-int canDirectMove(Troop *,int );
-char *directMove(Troop *,int ,int);
-int movement(Troop *,int ,char *[]);
-
-int canBlockMove(Block *,int ,int *);
-int canDirectMoveBlock(Block *,int );
-char *directBlockMove(Block *,int , int );
-int blockMovement(Block *,int , char *[]);
-
-int canTroopToHome(Troop *,int);
-int hasPlayerWon(int);
-void troopToHome(Troop *);
-void playerWinPlacement(Player *);
-int approachDistance(int,int,int);
-int isApproachPassed(Troop *,int,int,int);
-void approachPassed(Troop *,int,int);
-int isBlockApproachPassed(Block *,int,int);
-int isGameOver(Player *);
-int optionFinder(Player *,int *,Block *[],int );
-int blockFinder(Player *,Block *[]);
-int firstPlayer(char *[]);
-int randBot(int *,int);
-void printBoard();
-void orderPrint(int,char *[]);
-void playerTurn(int );
-int game(Player *,int,int,Block *[]);
-void createMysteryCell();
-void blockBreak(int, int, Block *[]);
-void genUniqueNum(int,int *);
-void printEnd(int );
-int mysteryCellOptions();
-void manageEffect(Player *);
-void mysteryCellEffect(int ,int );
-//void mysteryLand(int, int ,char *,char *);
-void mysteryLand();
-int effectOption1(int );
-void effectOption2(int );
-int effectOption3(int );
-void effectOption4(int );
-int canForceMove(int ,int );
-int forceMove(int ,int,int );
-//Player
-//Bot
-int redBot(Player *,int ,int *,Block *[]);
-int greenBot(Player *,int ,int *,Block *[]);
-int yellowBot(Player *,int ,int *,Block *[]);
-int blueBot(Player *,int ,int *,Block *[]);
-
-
 typedef int (*Bot)(Player *,int ,int *,Block *[]);
 Bot botArray[] = {yellowBot,blueBot,redBot,greenBot};
-
+//GLOBALS
 
 void PlayerInit(Player *player,char *playerName){
     static int count = 0;
@@ -770,7 +688,7 @@ int isBlockApproachPassed(Block *block,int oldPos,int rollVal){
 //return 1- One troop in the block hasn't captured an opponent// 
 //return 2- Not clear to pass meaning
 
-int isGameOver(Player *playerArray){
+int isGameOver(){
     int count=0;
     for(short i = 0; i<boardPlayers; i++){
         count += playerArray[i].isWinner;
@@ -929,13 +847,6 @@ void orderPrint(int first,char *playerName[]){
     }
 }
 
-void displayOptionArray(int optionArray[]){
-    for (short i = 0; i < 8; i++){
-        printf("%d\t",optionArray[i]);
-    }
-    printf("\n");
-}
-
 
 void playerTurn(int playerIndex){
     int option;
@@ -953,7 +864,6 @@ void playerTurn(int playerIndex){
         int optionArray[totalOptions]={0};
  
         int optionAmount =optionFinder(&playerArray[playerIndex],optionArray,block,rollVal);
-        displayOptionArray(optionArray);
         option = botArray[playerIndex](&playerArray[playerIndex],rollVal,optionArray,block);
 
         logCode = game(&playerArray[playerIndex],rollVal,option,block);
@@ -1265,6 +1175,7 @@ void mysteryLand(){
 }
 
 void createMysteryCell(){
+    elapsedRounds++;
     if ((elapsedRounds-roundsBeforeMystery)%roundsMysteryReset == 0){
         int mysteryCell;
         while(1){
