@@ -72,4 +72,7 @@ int redBot(Player *player,int rollVal,int *optionArray,Block *block[]);
 int greenBot(Player *player,int rollVal,int *optionArray,Block *block[]);
 int yellowBot(Player *player,int rollVal,int *optionArray,Block *block[]);
 int blueBot(Player *player,int rollVal,int *optionArray,Block *block[]);
+int playerBot(Player *player,int rollVal,int *optionArray,Block *block[]);
+void printOptions(Player *player,int *optionArray,Block *block[]);
+void manualPlay(char *playerName[]);
 #endif

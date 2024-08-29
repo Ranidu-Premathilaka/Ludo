@@ -1507,3 +1507,82 @@ int blueBot(Player *player,int rollVal,int *optionArray,Block *block[]){
         }
     }
 }
+
+int playerBot(Player *player,int rollVal,int *optionArray,Block *block[]){
+
+    printOptions(player,optionArray,block);
+    int option;
+    while(1){
+        scanf("%d",&option);
+        if(option>=0 && option < 8 && optionArray[option]){
+            return option;
+        }
+        printf("Invalid Option! Enter Again. \n");
+        while (getchar() != '\n');
+    }
+
+}
+
+void printOptions(Player *player,int *optionArray,Block *block[]){
+    if(optionArray[0]){printf("\033[0;32m");}
+    else{printf("\033[0;31m");}
+    printf("0.Piece To Board\n");
+    printf("\033[0m");
+
+    for(short i = 1; i < 5; i++){
+        if(optionArray[i]){printf("\033[0;32m");}
+        else{printf("\033[0;31m");}
+        printf("%d.Move %s\t",i,player->troopArr[i-1].name);
+        printf("\033[0m");
+    }
+    printf("\n");
+
+    for(short i = 5; i < 7; i++){
+        if(optionArray[i]){
+            printf("\033[0;32m");
+            printf("%d.Move %s\t",i,block[i-5]->name);
+            printf("\033[0m");
+        }
+    }
+    printf("\n");
+
+    if(optionArray[7]){printf("\033[0;32m");}
+    else{printf("\033[0;31m");}
+    printf("7.Skip Turn\n");
+    printf("\033[0m");
+
+    printf("\n");
+}
+
+void manualPlay(char *playerName[]){
+    printf("Do you want to play manually(y/n):");
+    char option;
+    while(1){
+        scanf("%c",&option);
+        if(option == 'y'){
+            break;
+        }else if(option == 'n'){
+            printf("Bots will play the game\n");
+            return;
+        }
+        printf("Invalid input Re enter:");
+        while (getchar() != '\n');
+    }
+
+    printf("Pick Which color to play!\n");
+    for(short i = 0; i < boardPlayers; i++){        
+        printf("%d-%s\n",i+1,playerName[i]);
+    }
+    int colourOption;
+    while(1){
+        scanf("%d",&colourOption);
+        if(colourOption>0 && colourOption <5){
+            break;
+        }
+        printf("Invalid input Re enter:");
+        while (getchar() != '\n');
+    }
+
+    botArray[colourOption-1] = playerBot;
+
+}

@@ -1,13 +1,14 @@
 #include <time.h>
 #include "gameLogic.h"
-
+//1724843095 ubuntu compiled run is an anomalyn
 int main(){
 
     int rollVal;
     
     char *playerName[4] = {"Yellow","Blue","Red","Green"};
+    manualPlay(playerName);
 
-    srand(1724843095);
+    srand(time(NULL));
     boardInit();
 
     int first = firstPlayer(playerName);
