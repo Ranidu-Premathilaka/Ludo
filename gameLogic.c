@@ -1130,7 +1130,7 @@ int game(Player *currentPlayer,int rollVal,int option,Block *block[]){
                 printf("Created a bigger Block %s in L%d\n",logArray[0],troop->position);
                 break;
             case 5:
-                printf("eliminated Block %s\n",logArray[1]);
+                printf("eliminated Block \n");
                 logCode = 1;
                 break;
             case -6:
@@ -1385,18 +1385,18 @@ int redBot(Player *player,int rollVal,int *optionArray,Block *block[]){
     for(short i = 1; i < 7; i++){
         if(optionArray[i] == 5){
             Troop *troop;
-            int pos,rotation;
+            int pos,rotation,tempRollVal;
             if(i>4){
                 troop = block[i-5]->troopArr[0];
                 rotation = block[i-5]->rotation;
-                rollVal = realRollVal(block[i-5],1,rollVal);
+                tempRollVal = realRollVal(block[i-5],1,rollVal)/board[troop->position].troopCount;
             }else{
                 troop = &player->troopArr[i-1];
                 rotation = player->troopArr[i-1].rotation;
-                rollVal = realRollVal(&player->troopArr[i-1],0,rollVal);
+                tempRollVal = realRollVal(&player->troopArr[i-1],0,rollVal);
             }
             
-            troop = board[nextBlock(troop,rollVal,rotation)].troop;
+            troop = board[nextBlock(troop,tempRollVal,rotation)].troop;
             rotation = (board[troop->position].troopCount > 1) ? board[troop->position].block->rotation:troop->rotation;
             int approachDst = approachDistance(troop->owner->approachLocation,troop->position,rotation);
 

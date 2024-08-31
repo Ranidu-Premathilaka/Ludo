@@ -19,7 +19,7 @@ int main(){
     while(isGameOver()){
         int index = count%boardPlayers;
         count++;
-
+        
         if (index == first){
             createMysteryCell();
         } 
