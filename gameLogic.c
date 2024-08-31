@@ -608,6 +608,7 @@ void pieceToHome(Piece *piece){
 
 void playerWinPlacement(Player *player){
     if(player->piecesAtHome == 4){
+        printf("player %s wins!!!!",player->name);
         player->isWinner = ++winnerPlacement;
     }
 }   
@@ -830,11 +831,16 @@ int firstPlayer(char *playerName[]){
 void allPlayerInit(char *playerName[]){
     for (int i = 0; i<boardPlayers; i++){
         PlayerInit(&playerArray[i],playerName[i]);
+        printf("The %s player has four (04) pieces named ",playerArray[i].name);
+        for(int j = 0; j < playerPieces - 1; j++){
+            printf("%s, ",playerArray[i].pieceArr[j].name);
+        }
+        printf("and %s.\n",playerArray[i].pieceArr[playerPieces-1].name);
     }
 }
 
 void orderPrint(int first,char *playerName[]){
-    printf("%s has the highest roll and will begin the game.\n",playerName[first]);
+    printf("\n%s has the highest roll and will begin the game.\n",playerName[first]);
     printf("The order of a single round is ");
     int range = boardPlayers+first;
     for (short i = first; i <range ; i++){

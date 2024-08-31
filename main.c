@@ -12,8 +12,8 @@ int main(){
     boardInit();
 
     int first = firstPlayer(playerName);
-    orderPrint(first,playerName);
     allPlayerInit(playerName);
+    orderPrint(first,playerName);
     int count = first;
 
     while(isGameOver()){
