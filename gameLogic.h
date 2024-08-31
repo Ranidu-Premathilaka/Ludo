@@ -49,7 +49,7 @@ void orderPrint(int first,char *playerName[]);
 void playerTurn(int playerIndex);
 void blockBreak(int playerIndex,int count,Block *block[]);
 void genUniqueNum(int pieceCount, int *result);
-void printEnd(int playerIndex);
+void printEnd();
 
 int game(Player *currentPlayer,int rollVal,int option,Block *block[]);
 

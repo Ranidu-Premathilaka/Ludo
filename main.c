@@ -21,6 +21,7 @@ int main(){
         count++;
         
         if (index == first){
+            printEnd();
             createMysteryCell();
         } 
 

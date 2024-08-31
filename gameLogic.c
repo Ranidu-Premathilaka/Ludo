@@ -608,7 +608,7 @@ void pieceToHome(Piece *piece){
 
 void playerWinPlacement(Player *player){
     if(player->piecesAtHome == 4){
-        printf("player %s wins!!!!",player->name);
+        printf("player %s wins!!!!\n",player->name);
         player->isWinner = ++winnerPlacement;
     }
 }   
@@ -897,7 +897,6 @@ void playerTurn(int playerIndex){
         }
 
     }
-    printEnd(playerIndex);
     manageEffect(&playerArray[playerIndex]);
 
 }
@@ -961,25 +960,28 @@ void genUniqueNum(int pieceCount, int *result){
 }
 
 
-void printEnd(int playerIndex){
-    Player *player =&playerArray[playerIndex];
-    printf("===================================================================\n");
-    printf("Location of pieces %s\n",player->name);
-    printf("===================================================================\n");
-    for(int i = 0; i < playerPieces; i++){
-        printf("Piece[%s] ->",player->pieceArr[i].name);
-        switch (player->pieceArr[i].where){
-        case 0:
-            printf("At Base\n");
-            break;
-        case 1:
-            printf("L%d\n",player->pieceArr[i].position);
-            break;
-        case 2:
-            printf("At Home Straight L%d\n",player->pieceArr[i].position);
-            break;
-        case 3:
-            printf("At Home\n");
+void printEnd(){
+    for(short i = 0; i < boardPlayers; i++){
+        Player *player =&playerArray[i];
+        printf("\n");
+        printf("===================================================================\n");
+        printf("Location of pieces %s\n",player->name);
+        printf("===================================================================\n");
+        for(int i = 0; i < playerPieces; i++){
+            printf("Piece[%s] ->",player->pieceArr[i].name);
+            switch (player->pieceArr[i].where){
+            case 0:
+                printf("At Base\n");
+                break;
+            case 1:
+                printf("L%d\n",player->pieceArr[i].position);
+                break;
+            case 2:
+                printf("At Home Straight L%d\n",player->pieceArr[i].position);
+                break;
+            case 3:
+                printf("At Home\n");
+            }
         }
     }
 }
@@ -1182,7 +1184,8 @@ void mysteryLand(){
 
 void createMysteryCell(){
     elapsedRounds++;
-    if ((elapsedRounds-roundsBeforeMystery)%roundsMysteryReset == 0){
+    int remRounds = (elapsedRounds-roundsBeforeMystery)%roundsMysteryReset;
+    if (remRounds == 0){
         int mysteryCell;
         while(1){
             mysteryCell = rand()%boardLength;
@@ -1191,6 +1194,10 @@ void createMysteryCell(){
                 printf("A mystery cell has spawned in location L%d and will be at this location for the next four rounds",globalMysteryCell);
                 break;
             }
+        }
+    }else{
+        if(globalMysteryCell > 0){
+            printf("The mystery cell is at L%d and will be at that location for the next %d rounds",globalMysteryCell,roundsMysteryReset-remRounds);
         }
     }
 }
