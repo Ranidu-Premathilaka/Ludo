@@ -1188,6 +1188,7 @@ void createMysteryCell(){
             mysteryCell = rand()%boardLength;
             if(!board[mysteryCell].pieceCount && mysteryCell != globalMysteryCell){
                 globalMysteryCell = mysteryCell;
+                printf("A mystery cell has spawned in location L%d and will be at this location for the next four rounds",globalMysteryCell);
                 break;
             }
         }
