@@ -20,7 +20,7 @@ void PlayerInit(Player *player,char *playerName){
     player->piecesAtHome=0;
     player->piecesAtBase=playerPieces;
     player->index = count;
-    player->startingLocation = 13*count + 2; //posCalc(13*count,2,counterClockwise) if more than 4 players hehe;
+    player->startingLocation = 13*count + 2; 
     player->approachLocation = 13*count;
     player->isWinner = 0;
     count++;
@@ -1518,6 +1518,7 @@ int blueBot(Player *player,int rollVal,int *optionArray,Block *block[]){
             return x;
         }
     }
+    //this return should never run due to the option array must having at least one non zero element
     return 7;
 }
 

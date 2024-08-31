@@ -1,10 +1,118 @@
-\documentclass[a4paper,12pt]{report}
+\documentclass{article}
 
 \begin{document}
-
-\title{Efficiency Analysis of [Your Program's Name]}
-\author{Your Name}
-\date{\today}
+\title{Report on Ludo CS}
+\author{Ranidu Premathilaka}
 \maketitle
-\lim_{x \to \infty}  
+
+\section{Data Structures and Efficiency}
+
+\subsection{Board Representation}
+
+The board is represented using an array of structures. Each structure within the array contains:
+\begin{itemize}
+    \item A pointer to a piece or a block
+    \item A piece count
+\end{itemize}
+
+This design decision prioritizes performance. While iterating through all pieces to calculate moves was possible, it introduced performance overhead. Thus taking up extra bit of memory for the sake of increasing performance felt understandable especially since memory constraints were not specified.
+
+\subsection{Piece Representation}
+
+Pieces are represented using a structure that includes the following fields:
+
+\begin{itemize}
+    \item Pointer to the player
+    \item Position
+    \item Captures
+    \item Approach passed count
+    \item Index
+    \item Mystery Effect and duration
+    \item Name
+    \item Location (base, standard board, home, home straight)
+    \item Rotation
+\end{itemize}
+
+This structure facilitates easy access to piece attributes, simplifying computations. The pointer to it's player is a easy way of accessing the global attributes each player has.
+
+\subsection{Player Representation}
+
+Players are represented using a structure that includes the following fields:
+
+\begin{itemize}
+    \item piece array
+    \item home straight space
+    \item pieces at Play
+    \item pieces at base
+    \item pieces at home
+    \item index
+    \item starting position
+    \item approach position
+    \item name
+    \item which podium position
+\end{itemize}
+
+Each player has an array of four elements storing their piece structures, establishing a clear link between player and their respective pieces. It also includes global attributes applicable to all pieces are stored within the player structure to eliminate redundancy. Home straight is also implemented to each player since it's a unique space for each player and this is done using the same board structure as above to avoid memory wastage.
+
+\subsection{Block Representation}
+
+Blocks are represented using a structure that includes the following fields:
+
+\begin{itemize}
+    \item pointer array for the pieces
+    \item mystery effect
+    \item name
+    \item rotation
+\end{itemize}
+
+The block structure is used so that it only stores the unique attributes that only a block would hold and nothing more reducing memory wastage.
+
+\section{Program Efficiency}
+
+\subsection{Modularity and Readability}
+
+The primary focus during development was to create a modular and redundancy-free program. This approach enhances code readability and simplifies future modifications. The game is structured into three main components which were worked on independently:
+
+\begin{center}
+    \item[Game Logic]
+    \item[{$\downarrow$} {$\uparrow$}]
+    \item [Interface (mediates communication between game logic and bots/players)]
+    \item[{$\downarrow$} {$\uparrow$}]
+    \item[Bots]
+\end{center}
+
+Even though this interface is an overhead for the given requirements it's much easier for development being able to divide and concur the program.  
+
+As an added upside to this is it enables to easily implement a way to implement manual play from a human player as well.  
+
+\subsection{Error Handling}
+
+Due to the way of development where the game logic and bots/players are implemented together through the interface error handling is at minimal since the intermediary interface handles on which inputs are possible and bots/players take decision based on those.
+
+\subsection{Reduced Computation}
+
+The program always try to do the least amount of computation for a given process and once a computation is done its output is used throughout instead of recomputing almost acting like a cache.
+
+This can be a balance between performance or memory usage since they seem to be inversely proportional in most cases. for a few of the function it is possible to introduce a way of caching so that the same computation wouldn't be executed but haven't implemented due to coming to the conclusion of the performance overhead is negligible.
+
+\subsection{Block Movement}
+
+Block movement all including eliminations are handled by the same functions as for single piece movements thus reducing repeated code and save space
+
+\subsection{Block Implementation}
+
+Even though block implementation can be done with static memory this requires to have unused variables if no blocks exists wasting memory. due to this and the fact that creating a block has a low probability on average thus i choose to dynamically allocate memory for only the required block when needed reducing memory usage.
+
+\subsection{Time complexity of functions}
+
+Most functions are kept at a constant time complexity in the worst case scenario. Even though there are functions that either iterate through the some sort of array such as checking weather a block exists between start and end or if iterating through the players or its pieces, due to the behaviour of the game since the n (in O(n)) has a upper bound the time complexity to run the program is kept to a minimum.
+
+\subsection{Optimization and Future Improvements}
+
+While there is always room for further optimization, the current code is considered production-ready. Its modular nature provides a solid foundation for future enhancements and optimizations as needed. 
+
+\section{Conclusion}
+
+This Ludo CS implementation prioritizes efficiency and maintainability through modular design, mindful data structures, and minimized computation. Strategic memory allocation and function design contribute to optimized performance and resource usage while being able to ensure that the program is adaptable to future requirements or fixes.
+
 \end{document}
