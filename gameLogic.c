@@ -119,7 +119,7 @@ int pieceToBoard(int rollVal,Player *player,char *logArray[]){
 
 }
 
-int spin(Piece *piece){
+void spin(Piece *piece){
     if(piece->where == 1){
         piece->rotation = (coinFlip()) ? clockwise:counterClockwise;
     }
@@ -148,7 +148,7 @@ int posCalc(int currentPos,int move,int direction){
     }
 }
 
-int pieceReset(Piece *piece){
+void pieceReset(Piece *piece){
     board[piece->position].pieceCount -= 1;
     (piece->owner->piecesAtPlay)--;
     (piece->owner->piecesAtBase)++;
@@ -375,7 +375,7 @@ int canDirectMove(Piece *piece,int newPos){
         else if(board[newPos].pieceCount == 1){return 5;}
         else{return -7;}
 
-    }else if(board[newPos].pieceCount == 0){return 6;}
+    }else {return 6;}
 }
 
 //return 4 - piece increments to it's own block
@@ -539,7 +539,7 @@ char *directBlockMove(Block *block,int newPos, int log){
     }
 
     if (log == 5){return elimBlockName;}
-
+    return NULL;
 }
 
 int blockMovement(Block *block,int rollVal, char *logArray[]){
@@ -700,7 +700,7 @@ int isGameOver(){
 void winnerPrint(){
     int winnerArray[boardPlayers];
     for (short i = 0; i < boardPlayers; i++){
-        winnerArray[playerArray[i].isWinner] = i;
+        winnerArray[(int)playerArray[i].isWinner] = i;
     }
     printf("\nPLAYER %s WON!!!!!!! \n",playerArray[winnerArray[1]].name);
     printf("----------------------------------\n");
@@ -869,7 +869,7 @@ void playerTurn(int playerIndex){
 
         int optionArray[totalOptions]={0};
  
-        int optionAmount =optionFinder(&playerArray[playerIndex],optionArray,block,rollVal);
+        optionFinder(&playerArray[playerIndex],optionArray,block,rollVal);
         option = botArray[playerIndex](&playerArray[playerIndex],rollVal,optionArray,block);
 
         logCode = game(&playerArray[playerIndex],rollVal,option,block);
@@ -992,8 +992,6 @@ void printEnd(){
 int game(Player *currentPlayer,int rollVal,int option,Block *block[]){
     int log = 0;
     int logCode = 0;
-    int streak = 0;
-    int mysteryCheck = 0; //0 - no moves done , 1- pieceMoved, 2-Block moved
     char *logArray[2];  //0- moved name,1- eliminated piece name
     Piece *piece;
     Block *currentBlock;
@@ -1346,8 +1344,8 @@ int effectOption3(int pos){
         if(log >0){
             effectOption2(pos);
             forceMove(pos,kotuwa,log);
-            return 0;
         }
+        return 0;
     }else{
         *rotation = counterClockwise;
         return 1;
@@ -1399,7 +1397,7 @@ int redBot(Player *player,int rollVal,int *optionArray,Block *block[]){
     for(short i = 1; i < 7; i++){
         if(optionArray[i] == 5){
             Piece *piece;
-            int pos,rotation,tempRollVal;
+            int rotation,tempRollVal;
             if(i>4){
                 piece = block[i-5]->pieceArr[0];
                 rotation = block[i-5]->rotation;
@@ -1507,7 +1505,7 @@ int yellowBot(Player *player,int rollVal,int *optionArray,Block *block[]){
     if(captureCount){return captureOption;}
     if(closestCount){return closestOption;}
 
-    randBot(optionArray,-1);
+    return randBot(optionArray,-1);
 }
 
 int blueBot(Player *player,int rollVal,int *optionArray,Block *block[]){
@@ -1520,6 +1518,7 @@ int blueBot(Player *player,int rollVal,int *optionArray,Block *block[]){
             return x;
         }
     }
+    return 7;
 }
 
 int playerBot(Player *player,int rollVal,int *optionArray,Block *block[]){
