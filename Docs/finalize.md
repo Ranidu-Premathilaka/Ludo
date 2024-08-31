@@ -6,9 +6,9 @@ if a block moves 3 times with rolling 6 consecutively
 need one captured to move to the homerow
 since the blocks are overpowered 
 
-if block or troop clockwise:
+if block or piece clockwise:
     needs to pass approach 1 times to go to homerow
-if block or troop counter clockwise
+if block or piece counter clockwise
     needs to pass approach 1 times to go to homerow
 
 (since this is a serious change don't if not possible without massive changes )

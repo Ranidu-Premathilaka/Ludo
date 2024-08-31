@@ -4,18 +4,18 @@
 
 typedef struct Board Board;
 typedef struct Player Player;
-typedef struct Troop Troop;
+typedef struct Piece Piece;
 typedef struct Block Block;
 
 
 struct Board{
-    Troop *troop;
+    Piece *piece;
     Block *block;
-    int troopCount;
+    int pieceCount;
 };
 
 struct Block{
-    Troop *troopArr[playerTroops];
+    Piece *pieceArr[playerPieces];
     int mysteryEffect[mysteryLog];
     char name[maxBlockName];
     char rotation;
@@ -26,7 +26,7 @@ struct Block{
 //mysteryEffect 2 - sick
 //mysteryEffect 3 - can't move
 
-struct Troop{
+struct Piece{
     Player *owner;
     int position;
     int captures;
@@ -39,11 +39,11 @@ struct Troop{
 };
 
 struct Player{
-    Troop troopArr[playerTroops];
+    Piece pieceArr[playerPieces];
     Board homeRow[homeRowLength];
-    int troopsAtPlay;
-    int troopsAtHome;
-    int troopsAtBase;
+    int piecesAtPlay;
+    int piecesAtHome;
+    int piecesAtBase;
     int index;
     int startingLocation;
     int approachLocation;

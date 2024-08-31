@@ -3,13 +3,13 @@
 
 const int boardLength = 52;
 const int boardPlayers = 4;
-const int playerTroops = 4;
+const int playerPieces = 4;
 
 typedef struct {
     //int boardArray[boardLength][boardPlayers];
     //int boardArray[boardLength][boardPlayers];
-    Troop *troopPtr[boardLength];
-    int troopCount;
+    Piece *piecePtr[boardLength];
+    int pieceCount;
     int roundsElapsed;
 }Board;
 
@@ -20,12 +20,12 @@ typedef struct {
     char notAtBase;
     char rotation;
     //int index?;
-}Troop;
+}Piece;
 
 typedef struct {
-    Troop troopArr[playerTroops];
-    int troopsAtPlay;
-    int troopsAtHome;
+    Piece pieceArr[playerPieces];
+    int piecesAtPlay;
+    int piecesAtHome;
     int index;
     int startingLocation;
     int approachLocation;
@@ -34,6 +34,6 @@ typedef struct {
 
 //typedef struct Board Board;
 //typedef struct Player Player;
-//typedef struct Troop Troop;
+//typedef struct Piece Piece;
 
 #endif 

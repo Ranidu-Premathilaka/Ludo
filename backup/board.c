@@ -7,7 +7,7 @@
 
 const int boardLength = 52;
 const int boardPlayers = 4;
-const int playerTroops = 4;
+const int playerPieces = 4;
 
 
 

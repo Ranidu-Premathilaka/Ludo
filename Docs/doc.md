@@ -5,21 +5,21 @@ main implementation
     player gets options on what he can move
     player choses choice
 
-        a troop to board
-            a single troop to board
+        a piece to board
+            a single piece to board
                 moved piece name
                 total pieces on board
-                total troops at base
+                total pieces at base
 
             makes a block
-                moved troop name
-                All troop names in block
+                moved piece name
+                All piece names in block
                 total pieces on board
-                total troops at base
+                total pieces at base
 
         a playerMovement
             a normal move
-                troop name
+                piece name
                 starting location
                 ending location
                 rollValue
@@ -27,7 +27,7 @@ main implementation
 
             gets blocked 
                 can't move
-                    troop name
+                    piece name
                     starting pos
                     ending pos
                     

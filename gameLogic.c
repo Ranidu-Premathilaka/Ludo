@@ -16,34 +16,34 @@ void PlayerInit(Player *player,char *playerName){
     //this can be an issue if restarting the game
 
     player->name= playerName;
-    player->troopsAtPlay=0;
-    player->troopsAtHome=0;
-    player->troopsAtBase=playerTroops;
+    player->piecesAtPlay=0;
+    player->piecesAtHome=0;
+    player->piecesAtBase=playerPieces;
     player->index = count;
     player->startingLocation = 13*count + 2; //posCalc(13*count,2,counterClockwise) if more than 4 players hehe;
     player->approachLocation = 13*count;
     player->isWinner = 0;
     count++;
     
-    for (short i = 0; i < playerTroops; i++){
-        player->troopArr[i].name[0] = playerName[0];
-        player->troopArr[i].name[1] = '1'+i;
-        player->troopArr[i].name[2] = '\0';
-        player->troopArr[i].position = 0;
-        player->troopArr[i].where = 0;
-        player->troopArr[i].captures = 0;
-        player->troopArr[i].owner = player;
-        player->troopArr[i].rotation = clockwise;
-        player->troopArr[i].approachPassed = 0;
-        player->troopArr[i].index = i;
-        player->troopArr[i].mysteryEffect[0] = 0;
-        player->troopArr[i].mysteryEffect[1] = 0;
+    for (short i = 0; i < playerPieces; i++){
+        player->pieceArr[i].name[0] = playerName[0];
+        player->pieceArr[i].name[1] = '1'+i;
+        player->pieceArr[i].name[2] = '\0';
+        player->pieceArr[i].position = 0;
+        player->pieceArr[i].where = 0;
+        player->pieceArr[i].captures = 0;
+        player->pieceArr[i].owner = player;
+        player->pieceArr[i].rotation = clockwise;
+        player->pieceArr[i].approachPassed = 0;
+        player->pieceArr[i].index = i;
+        player->pieceArr[i].mysteryEffect[0] = 0;
+        player->pieceArr[i].mysteryEffect[1] = 0;
 
     }
     for (short i = 0; i < homeRowLength; i++){
         player->homeRow[i].block = NULL;
-        player->homeRow[i].troop = NULL;
-        player->homeRow[i].troopCount = 0;
+        player->homeRow[i].piece = NULL;
+        player->homeRow[i].pieceCount = 0;
         
     }
 }
@@ -53,8 +53,8 @@ void PlayerInit(Player *player,char *playerName){
 void boardInit(){
     for (short i = 0; i <boardLength ; i++){
         board[i].block = NULL;
-        board[i].troop = NULL;
-        board[i].troopCount = 0;
+        board[i].piece = NULL;
+        board[i].pieceCount = 0;
     }
 }
 
@@ -74,24 +74,24 @@ int coinFlip(){
 //Player based Logic
 
 //return -1 - roll not enough
-//return -2 - no troops in base. (this is a serious error)
-//return 4 - troop increments to it's own block
-//return 5 - troop eliminates opponent troop
-//return 6 - troop moves freely without elimination
-//return -7 - troop is blocked by opponent 
-int canTroopToBoard(int rollVal,Player *player,Troop **troopPtr){
+//return -2 - no pieces in base. (this is a serious error)
+//return 4 - piece increments to it's own block
+//return 5 - piece eliminates opponent piece
+//return 6 - piece moves freely without elimination
+//return -7 - piece is blocked by opponent 
+int canPieceToBoard(int rollVal,Player *player,Piece **piecePtr){
     if(rollVal != maxRollVal){return -1;}
-    if(player->troopsAtBase == 0){return -2;}
+    if(player->piecesAtBase == 0){return -2;}
 
-    Troop *troop = nextTroop(player);
-    if(troopPtr != NULL){*troopPtr = troop;}
+    Piece *piece = nextPiece(player);
+    if(piecePtr != NULL){*piecePtr = piece;}
 
-    return canDirectMove(troop,player->startingLocation);
+    return canDirectMove(piece,player->startingLocation);
 }
 
-int troopToBoard(int rollVal,Player *player,char *logArray[]){
-    Troop *troop;
-    int log = canTroopToBoard(rollVal,player,&troop);
+int pieceToBoard(int rollVal,Player *player,char *logArray[]){
+    Piece *piece;
+    int log = canPieceToBoard(rollVal,player,&piece);
 
     switch (log){
     case -1:
@@ -101,17 +101,17 @@ int troopToBoard(int rollVal,Player *player,char *logArray[]){
         break;
 
     case -7:
-        logArray[1] = directMove(troop,player->startingLocation,log);
+        logArray[1] = directMove(piece,player->startingLocation,log);
 
     default:
-        logArray[0] = troop->name;
+        logArray[0] = piece->name;
 
-        troop->where=1;
-        spin(troop);
-        (player->troopsAtPlay)++;
-        (player->troopsAtBase)--;
+        piece->where=1;
+        spin(piece);
+        (player->piecesAtPlay)++;
+        (player->piecesAtBase)--;
 
-        logArray[1] = directMove(troop,player->startingLocation,log);
+        logArray[1] = directMove(piece,player->startingLocation,log);
         break;
     }
 
@@ -119,18 +119,18 @@ int troopToBoard(int rollVal,Player *player,char *logArray[]){
 
 }
 
-int spin(Troop *troop){
-    if(troop->where == 1){
-        troop->rotation = (coinFlip()) ? clockwise:counterClockwise;
+int spin(Piece *piece){
+    if(piece->where == 1){
+        piece->rotation = (coinFlip()) ? clockwise:counterClockwise;
     }
 }
 
 
-Troop *nextTroop(Player *player){
-    for (short i = 0; i < playerTroops; i++){
-        //implment to check out winners or troops in home already
-        if(player->troopArr[i].where == 0){
-            return &(player->troopArr[i]);
+Piece *nextPiece(Player *player){
+    for (short i = 0; i < playerPieces; i++){
+        //implment to check out winners or pieces in home already
+        if(player->pieceArr[i].where == 0){
+            return &(player->pieceArr[i]);
         }
     }
     return NULL;
@@ -148,49 +148,49 @@ int posCalc(int currentPos,int move,int direction){
     }
 }
 
-int troopReset(Troop *troop){
-    board[troop->position].troopCount -= 1;
-    (troop->owner->troopsAtPlay)--;
-    (troop->owner->troopsAtBase)++;
-    troop->position = 0;
-    troop->captures = 0;
-    troop->approachPassed = 0;
-    troop->where = 0;
-    troop->rotation = clockwise;
-    troop->mysteryEffect[0] = 0;
-    troop->mysteryEffect[1] = 0;
+int pieceReset(Piece *piece){
+    board[piece->position].pieceCount -= 1;
+    (piece->owner->piecesAtPlay)--;
+    (piece->owner->piecesAtBase)++;
+    piece->position = 0;
+    piece->captures = 0;
+    piece->approachPassed = 0;
+    piece->where = 0;
+    piece->rotation = clockwise;
+    piece->mysteryEffect[0] = 0;
+    piece->mysteryEffect[1] = 0;
     
 }
 
 //could be optimized to only have a pos parameter
-int Elimination(Troop *troop){
-    if(troop->where != 1){
+int Elimination(Piece *piece){
+    if(piece->where != 1){
         return 0;
     }
-    int pos = troop->position;
-    int troopCount = board[pos].troopCount;
+    int pos = piece->position;
+    int pieceCount = board[pos].pieceCount;
 
-    if(troopCount ==1){
-        troopReset(troop);
-        board[pos].troop = NULL;
+    if(pieceCount ==1){
+        pieceReset(piece);
+        board[pos].piece = NULL;
 
         return 1;
     }else{
-        for(short i = 0; i<troopCount; i++){
-            troopReset(board[pos].block->troopArr[i]);
+        for(short i = 0; i<pieceCount; i++){
+            pieceReset(board[pos].block->pieceArr[i]);
         }
         blockDeletion(&board[pos]);
-        board[pos].troop = NULL;
+        board[pos].piece = NULL;
         return 2;
     }
 }
-//return 0 - troop not in play
-//return 1 - troop removed
+//return 0 - piece not in play
+//return 1 - piece removed
 //return 2 - Block removed
 
 
 //can be used to get if the block needs to travel the longest path 
-//if position has 1 troop the longest path rotation
+//if position has 1 piece the longest path rotation
     //Think the algorthm can be more optimized for now should be okay.
     //Longest rotation
 int lRotation(int position,int approachLocation){
@@ -204,28 +204,28 @@ int lRotation(int position,int approachLocation){
 //could be optimized to do it instantly without returns 
 int calcBlockSpin(int position){
 
-    int count = board[position].troopCount;
-    int approachLocation = board[position].troop->owner->approachLocation;
+    int count = board[position].pieceCount;
+    int approachLocation = board[position].piece->owner->approachLocation;
     int longestRotation;
 
     longestRotation = lRotation(position,approachLocation);
 
     for(short i = 1; i<count; i++){
-        Troop *troop1 = board[position].block->troopArr[i-1];
-        Troop *troop2 = board[position].block->troopArr[i];
-        if(troop1->rotation != troop2->rotation){
+        Piece *piece1 = board[position].block->pieceArr[i-1];
+        Piece *piece2 = board[position].block->pieceArr[i];
+        if(piece1->rotation != piece2->rotation){
             return longestRotation;
         }
     }
 
-    return board[position].troop->rotation;
+    return board[position].piece->rotation;
 }
 
 //choose to dynammically alocate blocks due to the rarety of it and to save space
-void blockCreation(Troop *troop,int position,Board *boardCell){
+void blockCreation(Piece *piece,int position,Board *boardCell){
 
 
-    int count = boardCell->troopCount;
+    int count = boardCell->pieceCount;
 
     if(count == 1){
         Block *block = (Block *)malloc(sizeof(Block));
@@ -238,22 +238,22 @@ void blockCreation(Troop *troop,int position,Board *boardCell){
         block->mysteryEffect[0] = 0;
         block->mysteryEffect[1] = 0;
 
-        block->troopArr[0] = boardCell->troop;    
+        block->pieceArr[0] = boardCell->piece;    
         boardCell->block = block;
     }
 
-    boardCell->block->troopArr[count] = troop;
-    boardCell->troopCount++;
+    boardCell->block->pieceArr[count] = piece;
+    boardCell->pieceCount++;
     updateBlockName(position,boardCell);
 }
 
 void updateBlockName(int pos,Board *boardCell){
-    int count = boardCell->troopCount; 
+    int count = boardCell->pieceCount; 
     Block *block = boardCell->block;
     int totalChar=0;
     for (short i = 0; i < count; i++){
         for (short j = 0; j < 2; j++){
-            block->name[totalChar]=block->troopArr[i]->name[j];
+            block->name[totalChar]=block->pieceArr[i]->name[j];
             totalChar++;
         }
         if(i != count-1){
@@ -264,40 +264,40 @@ void updateBlockName(int pos,Board *boardCell){
     block->name[totalChar] = '\0';
 }
 
-void removeTroopCell(Troop *troop,Board *boardCell){
-        int pos = troop->position;
-        int count = boardCell->troopCount;
+void removePieceCell(Piece *piece,Board *boardCell){
+        int pos = piece->position;
+        int count = boardCell->pieceCount;
 
-        //if only one troop exists in cell;
+        //if only one piece exists in cell;
         if(count == 1){
-            boardCell->troop = NULL;
-            boardCell->troopCount = 0;
+            boardCell->piece = NULL;
+            boardCell->pieceCount = 0;
             return;
         }
 
-        //if more than one troop exist in cell;
+        //if more than one piece exist in cell;
         Block *block = boardCell->block;
         int index;
 
         for(short i = 0; i<count; i++){
-            if(block->troopArr[i]==troop){
+            if(block->pieceArr[i]==piece){
                 index = i;
                 break;
             }
         }
         for(short i = index; i<count-1; i++){
-            block->troopArr[i] = block->troopArr[i+1];
+            block->pieceArr[i] = block->pieceArr[i+1];
         }
-        block->troopArr[count-1] = NULL;
+        block->pieceArr[count-1] = NULL;
         if(index == 0){
-            boardCell->troop = block->troopArr[index];
+            boardCell->piece = block->pieceArr[index];
         }
-        boardCell->troopCount--;
-        //if removed cell removes the block into a single troop
-        if(boardCell->troopCount == 1){
+        boardCell->pieceCount--;
+        //if removed cell removes the block into a single piece
+        if(boardCell->pieceCount == 1){
             blockDeletion(boardCell);
         }else{
-            if(troop->where == 1){
+            if(piece->where == 1){
                 boardCell->block->rotation = calcBlockSpin(pos);
             }
             updateBlockName(pos,boardCell);
@@ -317,96 +317,96 @@ void blockDeletion(Board *boardCell){
 //return 0 - Block removed
 
 
-int nextBlock(Troop *troop,int rollVal,int rotation){
+int nextBlock(Piece *piece,int rollVal,int rotation){
 
     for (short i = 1; i <rollVal; i++){
-            int nextPos = posCalc(troop->position,i,rotation);
-            if(board[nextPos].block != NULL && ((board[nextPos].troop->owner) != (troop->owner))){
-                return posCalc(troop->position,i-1,rotation);
+            int nextPos = posCalc(piece->position,i,rotation);
+            if(board[nextPos].block != NULL && ((board[nextPos].piece->owner) != (piece->owner))){
+                return posCalc(piece->position,i-1,rotation);
             }
         }
     //no block exists in between
-    return posCalc(troop->position,rollVal,rotation);
+    return posCalc(piece->position,rollVal,rotation);
 }
 
-//use negative for unsuccessfull moves
+//useing negative for unsuccessfull moves
 
 //return -4 - mystery cell blocked
 //return -2 - rollVal is 0
-//return 1 - can Move troop to home
-//return -1 - can't move troop
-//return 2 - troop is in the home straight
-//return -3 - troop is blocked by block/ no valid moves
-//return 4 - troop increments to it's own block
-//return 5 - troop eliminates opponent troop
-//return 6 - troop moves freely without elimination
-//return -7 - troop is blocked by opponent 
-int canMove(Troop *troop,int rollVal,int *newPosPtr){
+//return 1 - can Move piece to home
+//return -1 - can't move piece
+//return 2 - piece is in the home straight
+//return -3 - piece is blocked by block/ no valid moves
+//return 4 - piece increments to it's own block
+//return 5 - piece eliminates opponent piece
+//return 6 - piece moves freely without elimination
+//return -7 - piece is blocked by opponent 
+int canMove(Piece *piece,int rollVal,int *newPosPtr){
 
-    if(troop->mysteryEffect[0] == 3){return -4;}
+    if(piece->mysteryEffect[0] == 3){return -4;}
 
     if(!rollVal){return -2;}
-    if(!canTroopToHome(troop,rollVal)){return 1;}
+    if(!canPieceToHome(piece,rollVal)){return 1;}
 
-    if(troop->where != 1 ){return -1;}
+    if(piece->where != 1 ){return -1;}
 
-    if(!isApproachPassed(troop,troop->position,rollVal,troop->rotation)){return 2;}
+    if(!isApproachPassed(piece,piece->position,rollVal,piece->rotation)){return 2;}
 
-    int newPos=nextBlock(troop,rollVal,troop->rotation);
+    int newPos=nextBlock(piece,rollVal,piece->rotation);
     if(newPosPtr != NULL){*newPosPtr = newPos;}
 
-    if(newPos == troop->position){return -3;}
+    if(newPos == piece->position){return -3;}
 
-    return canDirectMove(troop,newPos);
+    return canDirectMove(piece,newPos);
 }
 
-//return 4 - troop increments to it's own block
-//return 5 - troop eliminates opponent troop
-//return 6 - troop moves freely without elimination
-//return -7 - troop is blocked by opponent 
-//return -8 - troop is already in position
-int canDirectMove(Troop *troop,int newPos){
+//return 4 - piece increments to it's own block
+//return 5 - piece eliminates opponent piece
+//return 6 - piece moves freely without elimination
+//return -7 - piece is blocked by opponent 
+//return -8 - piece is already in position
+int canDirectMove(Piece *piece,int newPos){
 
-    if(troop->position == newPos){return -8;}
+    if(piece->position == newPos){return -8;}
 
-    if(board[newPos].troopCount){
+    if(board[newPos].pieceCount){
 
-        if(board[newPos].troop->owner == troop->owner){return 4;}
-        else if(board[newPos].troopCount == 1){return 5;}
+        if(board[newPos].piece->owner == piece->owner){return 4;}
+        else if(board[newPos].pieceCount == 1){return 5;}
         else{return -7;}
 
-    }else if(board[newPos].troopCount == 0){return 6;}
+    }else if(board[newPos].pieceCount == 0){return 6;}
 }
 
-//return 4 - troop increments to it's own block
-//return 5 - troop eliminates opponent troop
-//return 6 - troop moves freely without elimination
-//return -7 - troop is blocked by opponent 
-char *directMove(Troop *troop,int newPos,int log){
+//return 4 - piece increments to it's own block
+//return 5 - piece eliminates opponent piece
+//return 6 - piece moves freely without elimination
+//return -7 - piece is blocked by opponent 
+char *directMove(Piece *piece,int newPos,int log){
     char *ptr;
     switch (log){
     case 4:
-        blockCreation(troop,newPos,&board[newPos]);
+        blockCreation(piece,newPos,&board[newPos]);
         board[newPos].block->rotation = calcBlockSpin(newPos);
-        troop->position=newPos;
+        piece->position=newPos;
         ptr = board[newPos].block->name;
         break;
 
     case 5:
-        ptr = board[newPos].troop->name;
-        Elimination(board[newPos].troop);
+        ptr = board[newPos].piece->name;
+        Elimination(board[newPos].piece);
 
-        troop->position=newPos;
-        troop->captures += 1;
-        board[newPos].troopCount =1;
-        board[newPos].troop = troop;
+        piece->position=newPos;
+        piece->captures += 1;
+        board[newPos].pieceCount =1;
+        board[newPos].piece = piece;
         break;
 
     case 6:
     //return value is not declared
-        troop->position=newPos;
-        board[newPos].troopCount =1;
-        board[newPos].troop = troop;
+        piece->position=newPos;
+        board[newPos].pieceCount =1;
+        board[newPos].piece = piece;
         break;
 
     case -7:
@@ -417,9 +417,9 @@ char *directMove(Troop *troop,int newPos,int log){
     return ptr;
 }
 
-int movement(Troop *troop,int rollVal,char *logArray[]){
+int movement(Piece *piece,int rollVal,char *logArray[]){
     int newPos;
-    int log = canMove(troop,rollVal,&newPos);
+    int log = canMove(piece,rollVal,&newPos);
     switch (log){
     case -4:
         break;
@@ -427,27 +427,27 @@ int movement(Troop *troop,int rollVal,char *logArray[]){
         break;
 
     case 1:
-        troopToHome(troop);
+        pieceToHome(piece);
         break;
 
     case -1:
         break;
 
     case 2:
-        approachPassed(troop,rollVal,troop->rotation);
+        approachPassed(piece,rollVal,piece->rotation);
         break;
 
     case -3:
-        logArray[1] = board[posCalc(troop->position,1,troop->rotation)].block->name;
+        logArray[1] = board[posCalc(piece->position,1,piece->rotation)].block->name;
         break;
 
     case -7:
-        logArray[1] = directMove(troop,newPos,log);
+        logArray[1] = directMove(piece,newPos,log);
         break;
 
     default:
-        removeTroopCell(troop,&board[troop->position]);
-        logArray[1] = directMove(troop,newPos,log);
+        removePieceCell(piece,&board[piece->position]);
+        logArray[1] = directMove(piece,newPos,log);
         break;
     }
     return log;
@@ -464,9 +464,9 @@ int movement(Troop *troop,int rollVal,char *logArray[]){
 //return -6 - opponent block but count is different thus can't move
 //return 7 - can move block freely
 int canBlockMove(Block *block,int rollVal,int *newPosPtr){
-    Troop *troop = block->troopArr[0];
-    int oldPos = troop->position;
-    int count = board[oldPos].troopCount;
+    Piece *piece = block->pieceArr[0];
+    int oldPos = piece->position;
+    int count = board[oldPos].pieceCount;
 
     rollVal = rollVal/count;
 
@@ -474,11 +474,11 @@ int canBlockMove(Block *block,int rollVal,int *newPosPtr){
 
     if(!rollVal){return -1;}
 
-    if(!canTroopToHome(troop,rollVal)){return 1;}
+    if(!canPieceToHome(piece,rollVal)){return 1;}
 
     if(!isBlockApproachPassed(block,oldPos,rollVal)){return 2;}
 
-    int newPos = nextBlock(troop,rollVal,block->rotation);
+    int newPos = nextBlock(piece,rollVal,block->rotation);
     if(newPosPtr != NULL){*newPosPtr = newPos;}
 
     if(newPos == oldPos){return -3;}
@@ -493,11 +493,11 @@ int canBlockMove(Block *block,int rollVal,int *newPosPtr){
 //return -8 - block is already in new Position
 int canDirectMoveBlock(Block *block,int newPos){
 
-    if(block->troopArr[0]->position == newPos){return -8;}
+    if(block->pieceArr[0]->position == newPos){return -8;}
 
-    if(board[newPos].troopCount){
-        if(board[newPos].troop->owner == block->troopArr[0]->owner ){return 4;}
-        if(board[newPos].troopCount == board[block->troopArr[0]->position].troopCount){return 5;}
+    if(board[newPos].pieceCount){
+        if(board[newPos].piece->owner == block->pieceArr[0]->owner ){return 4;}
+        if(board[newPos].pieceCount == board[block->pieceArr[0]->position].pieceCount){return 5;}
         return -6;
     }
     return 7;
@@ -508,9 +508,9 @@ char *directBlockMove(Block *block,int newPos, int log){
 
     char *elimBlockName = board[newPos].block->name;
     if(log == -6 ){return elimBlockName;}
-    if (log == 5){Elimination(board[newPos].troop);}
+    if (log == 5){Elimination(board[newPos].piece);}
 
-    int oldPos = block->troopArr[0]->position;
+    int oldPos = block->pieceArr[0]->position;
 
     int mysteryEffectTemp[mysteryLog];
     if(block->mysteryEffect[0]){
@@ -519,18 +519,18 @@ char *directBlockMove(Block *block,int newPos, int log){
     }
 
     if(log != 4){
-        if (log == 5){board[oldPos].troop->captures++;}
-        Troop *troop = board[oldPos].troop;
-        removeTroopCell(troop,&board[oldPos]);
-        directMove(troop,newPos,6);
+        if (log == 5){board[oldPos].piece->captures++;}
+        Piece *piece = board[oldPos].piece;
+        removePieceCell(piece,&board[oldPos]);
+        directMove(piece,newPos,6);
     }
     
-    int count = board[oldPos].troopCount;
+    int count = board[oldPos].pieceCount;
     for (short i = 0; i < count; i++){
-        Troop *troop = board[oldPos].troop;
-        removeTroopCell(troop,&board[oldPos]);
-        directMove(troop,newPos,4);
-        if (log == 5){troop->captures++;}
+        Piece *piece = board[oldPos].piece;
+        removePieceCell(piece,&board[oldPos]);
+        directMove(piece,newPos,4);
+        if (log == 5){piece->captures++;}
     }
 
     if(block->mysteryEffect[0]){
@@ -545,8 +545,8 @@ char *directBlockMove(Block *block,int newPos, int log){
 int blockMovement(Block *block,int rollVal, char *logArray[]){
     int newPos;
     int log = canBlockMove(block,rollVal,&newPos);
-    int oldPos = block->troopArr[0]->position;
-    int count = board[oldPos].troopCount;
+    int oldPos = block->pieceArr[0]->position;
+    int count = board[oldPos].pieceCount;
     
     rollVal = rollVal/count;
 
@@ -557,9 +557,9 @@ int blockMovement(Block *block,int rollVal, char *logArray[]){
             break;
 
         case 1:
-            Board *homeRowBoard = &block->troopArr[0]->owner->homeRow[oldPos];
+            Board *homeRowBoard = &block->pieceArr[0]->owner->homeRow[oldPos];
             for (short i = 0; i < count; i++){
-                troopToHome(homeRowBoard->troop);
+                pieceToHome(homeRowBoard->piece);
             }
             break;
 
@@ -567,7 +567,7 @@ int blockMovement(Block *block,int rollVal, char *logArray[]){
         //for loop needed
             int rotation = block->rotation;
             for (short i = 0; i < count; i++){
-                approachPassed(board[oldPos].troop,rollVal,rotation);
+                approachPassed(board[oldPos].piece,rollVal,rotation);
             }
 
             break;
@@ -588,26 +588,26 @@ int hasPlayerWon(int playerIndex){
     else {return 0;}
 }
 
-int canTroopToHome(Troop *troop,int rollVal){
-    if(troop->where == 2 && rollVal == (homeRowLength -1) - troop->position){
+int canPieceToHome(Piece *piece,int rollVal){
+    if(piece->where == 2 && rollVal == (homeRowLength -1) - piece->position){
         return 0;
     }
     return 1;
 }
 
-void troopToHome(Troop *troop){
-    int pos = troop->position;
-    Player *owner = troop->owner;
-    removeTroopCell(troop,&owner->homeRow[pos]);
+void pieceToHome(Piece *piece){
+    int pos = piece->position;
+    Player *owner = piece->owner;
+    removePieceCell(piece,&owner->homeRow[pos]);
     
-    troop->where = 3;
-    owner->troopsAtHome++;
-    owner->troopsAtPlay--;
+    piece->where = 3;
+    owner->piecesAtHome++;
+    owner->piecesAtPlay--;
     playerWinPlacement(owner);
 }
 
 void playerWinPlacement(Player *player){
-    if(player->troopsAtHome == 4){
+    if(player->piecesAtHome == 4){
         player->isWinner = ++winnerPlacement;
     }
 }   
@@ -618,8 +618,8 @@ int approachDistance(int approachPos, int oldPos, int rotation){
 }
 
 //make sure to use the divised rollval when using for blocks
-int isApproachPassed(Troop *troop, int oldPos,int rollVal,int rotation){
-    int approachPos = troop->owner->approachLocation;
+int isApproachPassed(Piece *piece, int oldPos,int rollVal,int rotation){
+    int approachPos = piece->owner->approachLocation;
 
     int oldDist = approachDistance(approachPos,oldPos,rotation);
     rollVal = rollVal - (oldDist+1);
@@ -629,11 +629,11 @@ int isApproachPassed(Troop *troop, int oldPos,int rollVal,int rotation){
     //break if the rollVal is not enough
     if (rollVal < 0){return 3;}
     //check the cell after the approach 
-    int nextBlockPos = nextBlock(troop,oldDist,rotation);
+    int nextBlockPos = nextBlock(piece,oldDist,rotation);
     if((nextBlockPos == posCalc(oldPos,oldDist,rotation)) &&
-       (board[nextBlockPos].block == NULL || board[nextBlockPos].troop->owner == troop->owner)){
-        //troop->approachPassed += 1;
-        if((troop->approachPassed - rotation) >= 0 && troop->captures){
+       (board[nextBlockPos].block == NULL || board[nextBlockPos].piece->owner == piece->owner)){
+        //piece->approachPassed += 1;
+        if((piece->approachPassed - rotation) >= 0 && piece->captures){
             return 0;
         }
         return 1;
@@ -647,37 +647,37 @@ int isApproachPassed(Troop *troop, int oldPos,int rollVal,int rotation){
 //return 3 - rollValue not enough to pass approach
 //return 4 - not at play
 
-void approachPassed(Troop *troop,int rollVal,int rotation){
-    rollVal = rollVal -(approachDistance(troop->owner->approachLocation,troop->position,rotation)) -1;
+void approachPassed(Piece *piece,int rollVal,int rotation){
+    rollVal = rollVal -(approachDistance(piece->owner->approachLocation,piece->position,rotation)) -1;
 
-        removeTroopCell(troop,&board[troop->position]);
+        removePieceCell(piece,&board[piece->position]);
         rollVal = (rollVal > 4) ? 4:rollVal;
         // if the roll is above 4 then the player will be stopped at 4 to play 1 to finish
 
-        Board *homeRow = &troop->owner->homeRow[rollVal];
-        troop->where = 2;
-        troop->position = rollVal;
-        if(homeRow->troopCount){
-            blockCreation(troop,rollVal,homeRow);
+        Board *homeRow = &piece->owner->homeRow[rollVal];
+        piece->where = 2;
+        piece->position = rollVal;
+        if(homeRow->pieceCount){
+            blockCreation(piece,rollVal,homeRow);
         }else{
-            homeRow->troop = troop;
-            homeRow->troopCount = 1;
+            homeRow->piece = piece;
+            homeRow->pieceCount = 1;
         }
 }
 //return 1 - sucess
 //return 0 - not enough captures or passing of aproaches
 
-//only allowed if all troops in it have eliminated
+//only allowed if all pieces in it have eliminated
 int isBlockApproachPassed(Block *block,int oldPos,int rollVal){
 
-    if(isApproachPassed(block->troopArr[0],oldPos,rollVal,block->rotation) >1){
+    if(isApproachPassed(block->pieceArr[0],oldPos,rollVal,block->rotation) >1){
         return 2;
     }
 
-    int count = board[block->troopArr[0]->position].troopCount;
+    int count = board[block->pieceArr[0]->position].pieceCount;
     for (short i = 0; i < count; i++){
-        Troop *troop = block->troopArr[i];
-        if((troop->approachPassed - troop->rotation) <0  || troop->captures == 0){
+        Piece *piece = block->pieceArr[i];
+        if((piece->approachPassed - piece->rotation) <0  || piece->captures == 0){
             return 1;
         }
     }   
@@ -685,7 +685,7 @@ int isBlockApproachPassed(Block *block,int oldPos,int rollVal){
     
 }
 //return 0- The move is possible
-//return 1- One troop in the block hasn't captured an opponent// 
+//return 1- One piece in the block hasn't captured an opponent// 
 //return 2- Not clear to pass meaning
 
 int isGameOver(){
@@ -711,7 +711,7 @@ void winnerPrint(){
 }
 
 
-    //1.Take troop Out from base
+    //1.Take piece Out from base
     //2.Move standard board peices(2.1-R1,2.2-R2)
     //3.Move block
 
@@ -722,8 +722,8 @@ int realRollVal(void *ptr,int isBlock,int rollVal){
         Block *block = (Block *)ptr;
         mysteryVal =block->mysteryEffect[0];
     }else{
-        Troop *troop = (Troop *)ptr;
-        mysteryVal =troop->mysteryEffect[0];
+        Piece *piece = (Piece *)ptr;
+        mysteryVal =piece->mysteryEffect[0];
     }
 
     switch(mysteryVal){
@@ -742,19 +742,19 @@ int realRollVal(void *ptr,int isBlock,int rollVal){
 int optionFinder(Player *player,int *optionArray,Block *block[],int rollVal){
     int optionCount = 0;
 
-    //find which troops can make a valid move
-    for (short i = 0; i < playerTroops; i++){
-        Troop *troop = &player->troopArr[i];
-        int tmpRollVal = realRollVal(troop,0,rollVal);
-        int log = canMove(troop,tmpRollVal,NULL);
+    //find which pieces can make a valid move
+    for (short i = 0; i < playerPieces; i++){
+        Piece *piece = &player->pieceArr[i];
+        int tmpRollVal = realRollVal(piece,0,rollVal);
+        int log = canMove(piece,tmpRollVal,NULL);
         if(log > 0){
             optionArray[i+1] = log;
             optionCount++;
         } 
     }
 
-    //troop to board
-    if(canTroopToBoard(rollVal,player,NULL) > 0){
+    //piece to board
+    if(canPieceToBoard(rollVal,player,NULL) > 0){
         optionArray[0] = 1;
         optionCount++;
     }
@@ -786,12 +786,12 @@ int blockFinder(Player *player,Block *block[]){
         block[i] = NULL;
     }
 
-    for (short i = 0; i < playerTroops; i++){
-        if (player->troopArr[i].where == 0 || player->troopArr[i].where == 3){
+    for (short i = 0; i < playerPieces; i++){
+        if (player->pieceArr[i].where == 0 || player->pieceArr[i].where == 3){
             continue;
         }
         
-        int pos = player->troopArr[i].position;
+        int pos = player->pieceArr[i].position;
         Block *blockptr = board[pos].block;
         int chk = 1;
 
@@ -903,29 +903,29 @@ void blockBreak(int playerIndex,int count,Block *block[]){
     int choice = rand()%count;
     printf("Player Choose to break block %s \n",block[choice]->name);
 
-    int pos = block[choice]->troopArr[0]->position;
-    int troopCount = board[pos].troopCount;
+    int pos = block[choice]->pieceArr[0]->position;
+    int pieceCount = board[pos].pieceCount;
 
     //maybe implement direction check too?
-    int values[playerTroops]={0};
-    genUniqueNum(troopCount,values);
+    int values[playerPieces]={0};
+    genUniqueNum(pieceCount,values);
 
-    //troop count 3
+    //piece count 3
     //if we take that a piece has to move
-    //where troop count is 4 this would be imposible to move without creating another block
+    //where piece count is 4 this would be imposible to move without creating another block
     //thus let's take 0 as a possible move too 
 
-    for (short i = 0; i < troopCount; i++){
-        Troop *troop = board[pos].troop;
-        game(&playerArray[playerIndex],values[i],troop->index+1,NULL);
+    for (short i = 0; i < pieceCount; i++){
+        Piece *piece = board[pos].piece;
+        game(&playerArray[playerIndex],values[i],piece->index+1,NULL);
     }
 
 }
 
 //fix algorithm current one is bad?
-void genUniqueNum(int troopCount, int *result){
+void genUniqueNum(int pieceCount, int *result){
     int randomVal = rand();
-    if(troopCount == 2){
+    if(pieceCount == 2){
         char arrangements[3][2] = {"60","51","42"};
         int index = randomVal%3;
         int srt = randomVal%2;
@@ -935,7 +935,7 @@ void genUniqueNum(int troopCount, int *result){
         }
         
 
-    }else if(troopCount == 3){
+    }else if(pieceCount == 3){
         char arrangements[3][3] = {"510","420","321"};
         int index = randomVal%3;
         int srt = rand()%3;
@@ -945,7 +945,7 @@ void genUniqueNum(int troopCount, int *result){
         }
 
 
-    }else if(troopCount == 4){
+    }else if(pieceCount == 4){
         int srt = randomVal%4;
 
         for (short i = 0; i < 4; i++){
@@ -960,17 +960,17 @@ void printEnd(int playerIndex){
     printf("===================================================================\n");
     printf("Location of pieces %s\n",player->name);
     printf("===================================================================\n");
-    for(int i = 0; i < playerTroops; i++){
-        printf("Piece[%s] ->",player->troopArr[i].name);
-        switch (player->troopArr[i].where){
+    for(int i = 0; i < playerPieces; i++){
+        printf("Piece[%s] ->",player->pieceArr[i].name);
+        switch (player->pieceArr[i].where){
         case 0:
             printf("At Base\n");
             break;
         case 1:
-            printf("L%d\n",player->troopArr[i].position);
+            printf("L%d\n",player->pieceArr[i].position);
             break;
         case 2:
-            printf("At Home Straight L%d\n",player->troopArr[i].position);
+            printf("At Home Straight L%d\n",player->pieceArr[i].position);
             break;
         case 3:
             printf("At Home\n");
@@ -985,26 +985,26 @@ int game(Player *currentPlayer,int rollVal,int option,Block *block[]){
     int log = 0;
     int logCode = 0;
     int streak = 0;
-    int mysteryCheck = 0; //0 - no moves done , 1- troopMoved, 2-Block moved
-    char *logArray[2];  //0- moved name,1- eliminated troop name
-    Troop *troop;
+    int mysteryCheck = 0; //0 - no moves done , 1- pieceMoved, 2-Block moved
+    char *logArray[2];  //0- moved name,1- eliminated piece name
+    Piece *piece;
     Block *currentBlock;
 
     //some of the cases do not happen do to the functions above are implemented
     //remove them accordingly
     int endingPos;
     if(option == 0){
-        log = troopToBoard(rollVal,currentPlayer,logArray);
-        int playersAtBase = currentPlayer->troopsAtBase;
+        log = pieceToBoard(rollVal,currentPlayer,logArray);
+        int playersAtBase = currentPlayer->piecesAtBase;
         endingPos = currentPlayer->startingLocation;
-        troop = board[endingPos].troop;
+        piece = board[endingPos].piece;
 
         switch (log){
             case -1:
                 printf("Color %s Roll Not a 6.\n",currentPlayer->name);
                 break;
             case -2:
-                printf("Color %s All troops are in play.\n",currentPlayer->name);
+                printf("Color %s All pieces are in play.\n",currentPlayer->name);
                 break;
             case -7:
                 printf("blocked by opponent %s\n",logArray[1]);
@@ -1022,26 +1022,26 @@ int game(Player *currentPlayer,int rollVal,int option,Block *block[]){
 
         printf("Color %s Moves %s to the starting point. \n",currentPlayer->name,logArray[0]);
         printf("Player now has %d/4 of pieces on board and  %d/4 number of pieces on base \n",
-                currentPlayer->troopsAtPlay,playersAtBase);
+                currentPlayer->piecesAtPlay,playersAtBase);
 
     }else if(option > 0 && option <= 4){
-        // troop in board movement
-        troop = &currentPlayer->troopArr[option-1];
-        logArray[0]=troop->name;
+        // piece in board movement
+        piece = &currentPlayer->pieceArr[option-1];
+        logArray[0]=piece->name;
 
-        int startingPos = troop->position;
-        rollVal = realRollVal(troop,0,rollVal);
-        log = movement(troop,rollVal,logArray);
-        endingPos = troop->position;
+        int startingPos = piece->position;
+        rollVal = realRollVal(piece,0,rollVal);
+        log = movement(piece,rollVal,logArray);
+        endingPos = piece->position;
 
         if(log > 3){
-            if(isApproachPassed(troop,startingPos,rollVal,troop->rotation) == 1){
-                troop->approachPassed += 1;
+            if(isApproachPassed(piece,startingPos,rollVal,piece->rotation) == 1){
+                piece->approachPassed += 1;
                 printf("Approach passed Not enough captures or rotations.\n");
             }
         }
 
-        char *direction = (troop->rotation) ? "counter clockwise":"clockwise";
+        char *direction = (piece->rotation) ? "counter clockwise":"clockwise";
 
         printf("Color %s piece %s ",currentPlayer->name,logArray[0]);
         switch (log){
@@ -1053,14 +1053,14 @@ int game(Player *currentPlayer,int rollVal,int option,Block *block[]){
                 break;
             case 1:
                 printf("Moved into home.\n");
-                printf("Player has %d/4 pieces at Home.\n",currentPlayer->troopsAtHome);
+                printf("Player has %d/4 pieces at Home.\n",currentPlayer->piecesAtHome);
                 break;
             case -1:
                 printf("is not in Play.\n");
                 //goto option again.
                 break;
             case 2:
-                printf("entered Home straight in Position: %d\n",troop->position);
+                printf("entered Home straight in Position: %d\n",piece->position);
                 break;
             case -3:
                 printf("Blocked by %s in front and can't move. \n",logArray[1]);
@@ -1090,13 +1090,13 @@ int game(Player *currentPlayer,int rollVal,int option,Block *block[]){
 
     }else if(option == 5 || option == 6){
         currentBlock = block[option-5];
-        troop = currentBlock->troopArr[0];
+        piece = currentBlock->pieceArr[0];
 
-        int startingPos = currentBlock->troopArr[0]->position;
+        int startingPos = currentBlock->pieceArr[0]->position;
 
         rollVal = realRollVal(currentBlock,1,rollVal);
         log = blockMovement(currentBlock,rollVal,logArray);
-        endingPos =troop->position;
+        endingPos =piece->position;
 
         if (log == 1 || log == 2){
             logArray[0]=currentPlayer->homeRow[endingPos].block->name;
@@ -1115,10 +1115,10 @@ int game(Player *currentPlayer,int rollVal,int option,Block *block[]){
                 break;
             case 1:
                 printf("Moved into home.\n");
-                printf("Player has %d/4 pieces at Home.\n",currentPlayer->troopsAtHome);
+                printf("Player has %d/4 pieces at Home.\n",currentPlayer->piecesAtHome);
                 break;
             case 2:
-                printf("Entered Home straight and at position %d\n",troop->position);
+                printf("Entered Home straight and at position %d\n",piece->position);
                  
                 break;
             case -3:
@@ -1127,7 +1127,7 @@ int game(Player *currentPlayer,int rollVal,int option,Block *block[]){
                 break;
 
             case 4:
-                printf("Created a bigger Block %s in L%d\n",logArray[0],troop->position);
+                printf("Created a bigger Block %s in L%d\n",logArray[0],piece->position);
                 break;
             case 5:
                 printf("eliminated Block \n");
@@ -1143,12 +1143,12 @@ int game(Player *currentPlayer,int rollVal,int option,Block *block[]){
         }
 
         if(log >3){
-                if(isApproachPassed(troop,startingPos,rollVal,troop->rotation) < 2){
-                    int count = board[startingPos].troopCount;
+                if(isApproachPassed(piece,startingPos,rollVal,piece->rotation) < 2){
+                    int count = board[startingPos].pieceCount;
                     for (short i = 0; i < count; i++){
-                        currentBlock->troopArr[i]->approachPassed += 1;
+                        currentBlock->pieceArr[i]->approachPassed += 1;
                     }
-                    printf("Approach passed Not enough captures or rotations on One or more troops in block.\n");
+                    printf("Approach passed Not enough captures or rotations on One or more pieces in block.\n");
                 }
 
                 char *direction=(board[endingPos].block->rotation) ? "counter clockwise":"clockwise";
@@ -1164,12 +1164,12 @@ return logCode;
 }
 
 void mysteryLand(){  
-    if(board[globalMysteryCell].troopCount){
-        char *name = board[globalMysteryCell].troop->owner->name;
-        char *troop = (board[globalMysteryCell].troopCount > 1) ? (board[globalMysteryCell].block->name) : (board[globalMysteryCell].troop->name);
-        int endingPos = board[globalMysteryCell].troop->position;
-        printf("Color %s landed %s on A mysteryCell!\n",name,troop);
-        int choice = mysteryCellOptions(board[globalMysteryCell].troop->owner);
+    if(board[globalMysteryCell].pieceCount){
+        char *name = board[globalMysteryCell].piece->owner->name;
+        char *piece = (board[globalMysteryCell].pieceCount > 1) ? (board[globalMysteryCell].block->name) : (board[globalMysteryCell].piece->name);
+        int endingPos = board[globalMysteryCell].piece->position;
+        printf("Color %s landed %s on A mysteryCell!\n",name,piece);
+        int choice = mysteryCellOptions(board[globalMysteryCell].piece->owner);
         mysteryCellEffect(choice,endingPos);
     }
 }
@@ -1180,7 +1180,7 @@ void createMysteryCell(){
         int mysteryCell;
         while(1){
             mysteryCell = rand()%boardLength;
-            if(!board[mysteryCell].troopCount && mysteryCell != globalMysteryCell){
+            if(!board[mysteryCell].pieceCount && mysteryCell != globalMysteryCell){
                 globalMysteryCell = mysteryCell;
                 break;
             }
@@ -1193,10 +1193,10 @@ int mysteryCellOptions(Player *player){
 }
 
 void manageEffect(Player *player){
-    for(short i = 0; i < playerTroops; i++){
-        if (elapsedRounds - (player->troopArr[i].mysteryEffect[1]) == effectDuration ){
-            player->troopArr[i].mysteryEffect[0] = 0;
-            //player->troopArr[i].mysteryEffect[1] = 0;
+    for(short i = 0; i < playerPieces; i++){
+        if (elapsedRounds - (player->pieceArr[i].mysteryEffect[1]) == effectDuration ){
+            player->pieceArr[i].mysteryEffect[0] = 0;
+            //player->pieceArr[i].mysteryEffect[1] = 0;
         } 
     }
 
@@ -1218,10 +1218,10 @@ void mysteryCellEffect(int option,int pos){
 //are chosen
 
 //if the move isn't possible they stay in mysterycell untill moved 
-//or another troop lands on it and makes a block which the mystery effect is acted on both
+//or another piece lands on it and makes a block which the mystery effect is acted on both
 
     int newPos,log=0;
-    int count = board[pos].troopCount;
+    int count = board[pos].pieceCount;
     char *multiple = (count>1) ? "s are":" is";
     
     printf("Player randomly selected Option: ");
@@ -1271,7 +1271,7 @@ void mysteryCellEffect(int option,int pos){
 
     case 5:
         printf("To Starting Position\n");
-        newPos = board[pos].troop->owner->startingLocation;
+        newPos = board[pos].piece->owner->startingLocation;
         log = canForceMove(pos,newPos);
         if(log>0){
             printf("Piece%s teleported back to starting Position.\n",multiple);
@@ -1281,7 +1281,7 @@ void mysteryCellEffect(int option,int pos){
 
     case 6:
         printf("To Starting Position\n");
-        newPos = board[pos].troop->owner->approachLocation;
+        newPos = board[pos].piece->owner->approachLocation;
         log = canForceMove(pos,newPos);
         if(log>0){
             printf("Price%s teleported to player approach.\n",multiple);
@@ -1299,32 +1299,32 @@ void mysteryCellEffect(int option,int pos){
 int effectOption1(int pos){
 //bhawana (9th)
     int randEffect = coinFlip() + 1;
-    if(board[pos].troopCount > 1){
+    if(board[pos].pieceCount > 1){
         board[pos].block->mysteryEffect[0] = randEffect;
         board[pos].block->mysteryEffect[1] = elapsedRounds;
     }else{
-        board[pos].troop->mysteryEffect[0] = randEffect;
-        board[pos].troop->mysteryEffect[1] = elapsedRounds;
+        board[pos].piece->mysteryEffect[0] = randEffect;
+        board[pos].piece->mysteryEffect[1] = elapsedRounds;
     }
     return randEffect;
 }
 void effectOption2(int pos){
 //koduwa (27th)
-    if(board[pos].troopCount > 1){
+    if(board[pos].pieceCount > 1){
         board[pos].block->mysteryEffect[0] = 3;
         board[pos].block->mysteryEffect[1] = elapsedRounds;
     }else{
-        board[pos].troop->mysteryEffect[0] = 3;
-        board[pos].troop->mysteryEffect[1] = elapsedRounds;
+        board[pos].piece->mysteryEffect[0] = 3;
+        board[pos].piece->mysteryEffect[1] = elapsedRounds;
     }
 }
 int effectOption3(int pos){
 //Pita-kotuwa (46th)
     char *rotation;
-    if(board[pos].troopCount > 1){
+    if(board[pos].pieceCount > 1){
         rotation = &board[pos].block->rotation;
     }else{
-        rotation = &board[pos].troop->rotation;
+        rotation = &board[pos].piece->rotation;
     }
 
     if(*rotation){
@@ -1341,25 +1341,25 @@ int effectOption3(int pos){
 }
 void effectOption4(int pos){
 //To base
-    Elimination(board[pos].troop);
+    Elimination(board[pos].piece);
 }
 
 int canForceMove(int pos,int endingPos){
-    if(board[pos].troopCount > 1){
+    if(board[pos].pieceCount > 1){
         return canDirectMoveBlock(board[pos].block,endingPos);
     }else{
-        return canDirectMove(board[pos].troop,endingPos);
+        return canDirectMove(board[pos].piece,endingPos);
     }
 }
 
 int forceMove(int pos,int endingPos,int log){
 //to starting position or approach 
-    if(board[pos].troopCount > 1){
+    if(board[pos].pieceCount > 1){
         directBlockMove(board[pos].block,endingPos,log);
     }else{
-        Troop *troop = board[pos].troop;
-        removeTroopCell(troop,&board[pos]);
-        directMove(troop,endingPos,log);
+        Piece *piece = board[pos].piece;
+        removePieceCell(piece,&board[pos]);
+        directMove(piece,endingPos,log);
     }
     return log;
 }
@@ -1384,21 +1384,21 @@ int redBot(Player *player,int rollVal,int *optionArray,Block *block[]){
     //closest to eliminate
     for(short i = 1; i < 7; i++){
         if(optionArray[i] == 5){
-            Troop *troop;
+            Piece *piece;
             int pos,rotation,tempRollVal;
             if(i>4){
-                troop = block[i-5]->troopArr[0];
+                piece = block[i-5]->pieceArr[0];
                 rotation = block[i-5]->rotation;
-                tempRollVal = realRollVal(block[i-5],1,rollVal)/board[troop->position].troopCount;
+                tempRollVal = realRollVal(block[i-5],1,rollVal)/board[piece->position].pieceCount;
             }else{
-                troop = &player->troopArr[i-1];
-                rotation = player->troopArr[i-1].rotation;
-                tempRollVal = realRollVal(&player->troopArr[i-1],0,rollVal);
+                piece = &player->pieceArr[i-1];
+                rotation = player->pieceArr[i-1].rotation;
+                tempRollVal = realRollVal(&player->pieceArr[i-1],0,rollVal);
             }
             
-            troop = board[nextBlock(troop,tempRollVal,rotation)].troop;
-            rotation = (board[troop->position].troopCount > 1) ? board[troop->position].block->rotation:troop->rotation;
-            int approachDst = approachDistance(troop->owner->approachLocation,troop->position,rotation);
+            piece = board[nextBlock(piece,tempRollVal,rotation)].piece;
+            rotation = (board[piece->position].pieceCount > 1) ? board[piece->position].block->rotation:piece->rotation;
+            int approachDst = approachDistance(piece->owner->approachLocation,piece->position,rotation);
 
             if(minApproachDst > approachDst){
                 option = i;
@@ -1420,16 +1420,16 @@ int greenBot(Player *player,int rollVal,int *optionArray,Block *block[]){
     char captureCount = 0;
     int option;
     for(short i = 1; i<5; i++){
-        //troop make block
+        //piece make block
         if(optionArray[i] == 4){return i;}
 
-        //troop to capture
+        //piece to capture
         if(optionArray[i] == 5){
             if(!captureCount){
                 option = i;
                 captureCount++;
             }
-            if(!player->troopArr[i-1].captures){option = i;}
+            if(!player->pieceArr[i-1].captures){option = i;}
         }
     }
     if(optionArray[0]){return 0;}
@@ -1456,7 +1456,7 @@ int yellowBot(Player *player,int rollVal,int *optionArray,Block *block[]){
 
     for (short i = 1; i < 5; i++){
         //best possible capture peice
-        if(optionArray[i] == 5 && (!captureCount || !player->troopArr[i-1].captures)){
+        if(optionArray[i] == 5 && (!captureCount || !player->pieceArr[i-1].captures)){
             captureOption = i;
             captureCount++;
         }
@@ -1467,7 +1467,7 @@ int yellowBot(Player *player,int rollVal,int *optionArray,Block *block[]){
         //move closest to the approach
         if(optionArray[i]){
             closestCount++;
-            int tempDist = approachDistance(player->approachLocation,player->troopArr[i-1].position,player->troopArr[i-1].rotation);
+            int tempDist = approachDistance(player->approachLocation,player->pieceArr[i-1].position,player->pieceArr[i-1].rotation);
             if(minApproachDist > tempDist){
                 minApproachDist = tempDist;
                 closestOption = i;
@@ -1480,7 +1480,7 @@ int yellowBot(Player *player,int rollVal,int *optionArray,Block *block[]){
         //closest blocks are prioritized
         if(optionArray[i+5]){
             closestCount++;
-            int tempDist = approachDistance(player->approachLocation,block[i]->troopArr[0]->position,block[i]->rotation);
+            int tempDist = approachDistance(player->approachLocation,block[i]->pieceArr[0]->position,block[i]->rotation);
             if(minApproachDist > tempDist){
                 minApproachDist = tempDist;
                 closestOption = i+5;
@@ -1532,7 +1532,7 @@ void printOptions(Player *player,int *optionArray,Block *block[]){
     for(short i = 1; i < 5; i++){
         if(optionArray[i]){printf("\033[0;32m");}
         else{printf("\033[0;31m");}
-        printf("%d.Move %s\t",i,player->troopArr[i-1].name);
+        printf("%d.Move %s\t",i,player->pieceArr[i-1].name);
         printf("\033[0m");
     }
     printf("\n");

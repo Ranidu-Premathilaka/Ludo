@@ -3,7 +3,7 @@
 
 #define boardLength 52
 #define boardPlayers 4
-#define playerTroops 4
+#define playerPieces 4
 #define homeRowLength 6
 #define approachLength 6
 #define maxBlocks 2

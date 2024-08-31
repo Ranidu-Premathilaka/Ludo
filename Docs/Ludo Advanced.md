@@ -11,21 +11,21 @@ Board
 * Array to implement the board  
 * Method to return how many players exists   
 * Method to return which color exists there  
-* Returns where troops are for a specific color  
+* Returns where pieces are for a specific color  
 * Ammount of rounds elapsed (1 round is all players rolls one time)
 
 Player
 
 * Structure to store?  
   * Position (should be accessible by bots and players)  
-  * Troops in board 
+  * Pieces in board 
   * Moves to go for the block before homestrech?
-  * Troops at home(end)  
-    * We can use the difference to calculate the troops in start cause having a troops at base would make us do a calculation of when a troop comes to the home if all troops are in home now?	
+  * Pieces at home(end)  
+    * We can use the difference to calculate the pieces in start cause having a pieces at base would make us do a calculation of when a piece comes to the home if all pieces are in home now?	
 
   Current roll number (1,2 or 3rd)
 
-* Troops?  
+* Pieces?  
   	Rotation?  
   	Captured?
 
@@ -35,13 +35,13 @@ Player
 Game logic
 
 * Player based logic  
-  * Moving a troop move into the board (according to a dice roll of 6\)  
+  * Moving a piece move into the board (according to a dice roll of 6\)  
     * Can’t if the roll isnt 6  
       * A Coin flip is executed  
         * Heads- Clockwise  
         * Tails-	Counter-clockwise  
-  * Moving a troop (according to a dice roll)  
-    * Can’t if no troops exist on the board  
+  * Moving a piece (according to a dice roll)  
+    * Can’t if no pieces exist on the board  
   * If rolls 6 gets to roll again (INCREMENTS ROLL NUMBER)  
     * Current roll number \= 3 then ignore the roll  
 * Current roll number is cleared for a player when handing over to the next  
@@ -60,19 +60,19 @@ Game logic
   * If a piece lands on the player itself it creates a block(can be 2 or more)  
     * Opponents can’t jump over   
     * Can land on the adjacent block if the roll is past the block  
-    * If there is no other moves to make the turn is skipped		Ex if the roll is 6 and the only player on the board can’t move you have to take out a troop from base  
-  * Once in homestretch the troop must roll the exact amount to go to home
+    * If there is no other moves to make the turn is skipped		Ex if the roll is 6 and the only player on the board can’t move you have to take out a piece from base  
+  * Once in homestretch the piece must roll the exact amount to go to home
 
 * Blocks  
   * Blocks can move together  
   * Can be broken and go back to the normal direction  
   * If from opposite directions all should take the longest route  
-    * All are move  (dice roll/number of troops) of blocks  
-  * If dice rolls 3 6s then the block should be split in such where all the moves of the troops should sum up to 6
+    * All are move  (dice roll/number of pieces) of blocks  
+  * If dice rolls 3 6s then the block should be split in such where all the moves of the pieces should sum up to 6
 
 * Block capture  
   * Block of the same size can capture a block(returns to base)  
-  * Every troops capturecount increases
+  * Every pieces capturecount increases
 
 			  
 		  
@@ -85,7 +85,7 @@ Game logic
   * Mystery cell  
     * To appear after two rounds at any cell  
       * Conditions: standard path  
-      * Can’t spawn at a place where a troop is situated  
+      * Can’t spawn at a place where a piece is situated  
     * Reallocated a mystery cell after 4 rounds  
       * Can’t be in the same location
 
@@ -111,13 +111,13 @@ Single pieces can move
       * piece can't move
 
 Blocks can move
-  * blocks can only split by moving one troop out (ex block of 3 needs 2 turns to get rid of the block)
-  * blocks can move but the assigned (roll/number of troops)
+  * blocks can only split by moving one piece out (ex block of 3 needs 2 turns to get rid of the block)
+  * blocks can move but the assigned (roll/number of pieces)
   * assume a block can't eliminate a piece or a block of different size
   * a block of same size can be eliminated
-    * elimination points will be given to troops equally
+    * elimination points will be given to pieces equally
   
-  * troop should retain,
+  * piece should retain,
     * rotation
   * the sum of all moves = rollValue
 
@@ -132,9 +132,9 @@ Blocks can move
     check the closest rotation before move
     check the closest rotation after move
       if they change 
-          the troop passed the apporoach
+          the piece passed the apporoach
 
   Approach passing function
-    a troop can pass the approach
+    a piece can pass the approach
     a block can pass the approach
     

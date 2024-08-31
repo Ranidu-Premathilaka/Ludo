@@ -19,11 +19,11 @@ void boardInit();
 void playerCount(int , int *,int *);
 int roll();
 int coinFlip();
-int troopToBoard(int ,Player *);
-int troopToBase(Troop *);
-int spin(Troop *);
-Troop *nextTroop(Player *);
-int movement(Troop *,int);
+int pieceToBoard(int ,Player *);
+int pieceToBase(Piece *);
+int spin(Piece *);
+Piece *nextPiece(Player *);
+int movement(Piece *,int);
 int posCalc(int,int,int);
 
 //Player
@@ -31,21 +31,21 @@ void PlayerInit(Player *player,char *playerName){
     static int count = 0;
 
     player->name= playerName;
-    player->troopsAtPlay=0;
-    player->troopsAtHome=0;
+    player->piecesAtPlay=0;
+    player->piecesAtHome=0;
     player->index = count;
     player->startingLocation = 13*count;
     player->approachLocation = posCalc(13*count,2,1);
     count++;
     
-    for (short i = 0; i < playerTroops; i++){
-        player->troopArr[i].name[0] = 'R';
-        player->troopArr[i].name[1] = '0'+i;
-        player->troopArr[i].name[2] = "\0";
-        player->troopArr[i].position = 0;
-        player->troopArr[i].notAtBase = 0;
-        player->troopArr[i].owner = player;
-        player->troopArr[i].rotation = clockwise;
+    for (short i = 0; i < playerPieces; i++){
+        player->pieceArr[i].name[0] = 'R';
+        player->pieceArr[i].name[1] = '0'+i;
+        player->pieceArr[i].name[2] = "\0";
+        player->pieceArr[i].position = 0;
+        player->pieceArr[i].notAtBase = 0;
+        player->pieceArr[i].owner = player;
+        player->pieceArr[i].rotation = clockwise;
     }
     
 }
@@ -89,16 +89,16 @@ int coinFlip(){
 //Player based Logic
 
 
-int troopToBoard(int rollVal,Player *player){
+int pieceToBoard(int rollVal,Player *player){
 
     if(rollVal==6){
-            Troop *troop = nextTroop(player);
-        if (troop != NULL){
+            Piece *piece = nextPiece(player);
+        if (piece != NULL){
             
-            troop->notAtBase=1;
-            troop->position=player->approachLocation;
-            (player->troopsAtPlay)++;
-            board.boardArray[troop->position][player->index] += 1;
+            piece->notAtBase=1;
+            piece->position=player->approachLocation;
+            (player->piecesAtPlay)++;
+            board.boardArray[piece->position][player->index] += 1;
 
             return 0;
         }
@@ -108,32 +108,32 @@ int troopToBoard(int rollVal,Player *player){
 }
 //return 0 - Completed
 //return 1 - roll not 6
-//return 2 - no troops currently at Base
+//return 2 - no pieces currently at Base
 
-int troopToBase(Troop *troop){
-    if(troop->notAtBase){
-        board.boardArray[troop->position][troop->owner->index] -= 1;
-        troop->notAtBase=0;
-        troop->position=0;
-        (troop->owner->troopsAtPlay)--;
+int pieceToBase(Piece *piece){
+    if(piece->notAtBase){
+        board.boardArray[piece->position][piece->owner->index] -= 1;
+        piece->notAtBase=0;
+        piece->position=0;
+        (piece->owner->piecesAtPlay)--;
 
         return 0;
     }
     return 1;
 }
 //return 0 - completed
-//return 1 - troop is not in play
+//return 1 - piece is not in play
 
-int spin(Troop *troop){
-    if(troop->notAtBase){
-        troop->rotation = (coinFlip()) ? clockwise:counterClockwise;
+int spin(Piece *piece){
+    if(piece->notAtBase){
+        piece->rotation = (coinFlip()) ? clockwise:counterClockwise;
     }
 }
 
-Troop *nextTroop(Player *player){
-    int troopsNotAtBase = (player->troopsAtHome)+(player->troopsAtPlay);
-    if(troopsNotAtBase != playerTroops){
-        return &(player->troopArr[troopsNotAtBase]);
+Piece *nextPiece(Player *player){
+    int piecesNotAtBase = (player->piecesAtHome)+(player->piecesAtPlay);
+    if(piecesNotAtBase != playerPieces){
+        return &(player->pieceArr[piecesNotAtBase]);
     }
     return NULL;
 
@@ -174,27 +174,27 @@ int posCalc(int currentPos,int move,int direction){
     }
 }
 
-int movement(Troop *troop,int rollVal){
-    int newPos = posCalc(troop->position,rollVal,troop->rotation);
+int movement(Piece *piece,int rollVal){
+    int newPos = posCalc(piece->position,rollVal,piece->rotation);
     int opCount;
     int playerIndex;
 
-    //find how many troops recide in the new space and which colour
-    for(short i=0; i<playerTroops;i++){
+    //find how many pieces recide in the new space and which colour
+    for(short i=0; i<playerPieces;i++){
         if(board.boardArray[newPos][i]){
             opCount=board.boardArray[newPos][i];
             playerIndex=i;
             break;
         }
     }
-    if(playerIndex == troop->owner->index){
+    if(playerIndex == piece->owner->index){
         //making a block
-        troop->position=newPos;
+        piece->position=newPos;
         board.boardArray[newPos][playerIndex] += 1;
     }else if(opCount == 1){
-        troop->position=newPos;
-        board.boardArray[newPos][troop->owner->index] += 1;
-        troopToBase();
+        piece->position=newPos;
+        board.boardArray[newPos][piece->owner->index] += 1;
+        pieceToBase();
     }
 
 

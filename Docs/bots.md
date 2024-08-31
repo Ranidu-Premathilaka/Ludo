@@ -3,7 +3,7 @@ RED
     when two captures are possible
         captures the opponent piece closest to it's home
     if cannot capture from 6 roll val
-        then only takes troop from base
+        then only takes piece from base
     avoid making blocks
 
 Green
