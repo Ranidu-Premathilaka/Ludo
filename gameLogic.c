@@ -1233,8 +1233,8 @@ void mysteryCellEffect(int option,int pos){
 //or another piece lands on it and makes a block which the mystery effect is acted on both
 
     int newPos,log=0;
-    int count = board[pos].pieceCount;
-    char *multiple = (count>1) ? "s are":" is";
+    char *name = board[globalMysteryCell].piece->owner->name;
+    char *pieceName = (board[globalMysteryCell].pieceCount > 1) ? (board[globalMysteryCell].block->name) : (board[globalMysteryCell].piece->name);
     
     printf("Player randomly selected Option: ");
     switch (option){
@@ -1243,9 +1243,9 @@ void mysteryCellEffect(int option,int pos){
         newPos = bhawana;
         log = canForceMove(pos,newPos);
         if(log >0){
-            printf("piece%s teleported into bhawana \n",multiple);
+            printf("Color %s piece(s) %s teleported into bhawana \n",name,pieceName);
 
-            char *effect = (effectOption1(pos) == 1) ? "energized":"sick";
+            char *effect = (effectOption1(pos) == 1) ? "energized, and movement speed doubles":"sick, and movement speed halves";
             printf("Pieces got %s\n",effect);
             forceMove(pos,newPos,log);
         }
@@ -1256,7 +1256,7 @@ void mysteryCellEffect(int option,int pos){
         newPos = kotuwa;
         log = canForceMove(pos,newPos);
         if(log >0){
-            printf("piece%s teleported into kotuwa \n",multiple);
+            printf("Color %s piece(s) %s teleported into kotuwa and attends briefing and cannot move for four rounds \n",name,pieceName);
             effectOption2(pos);
             forceMove(pos,newPos,log);
         }
@@ -1267,7 +1267,7 @@ void mysteryCellEffect(int option,int pos){
         newPos = pitaKotuwa;
         log = canForceMove(pos,newPos);
         if(log >0){
-            printf("piece%s teleported into pita Kotuwa \n",multiple);
+            printf("Color %s piece(s) %s teleported into pita Kotuwa \n",name,pieceName);
 
             if(effectOption3(pos)){
                 forceMove(pos,newPos,log);
@@ -1277,7 +1277,7 @@ void mysteryCellEffect(int option,int pos){
 
     case 4:
         printf("To Base\n");
-        printf("Piece%s teleported back to Base.\n",multiple);
+        printf("Color %s piece(s) %s teleported back to Base.\n",name,pieceName);
         effectOption4(pos);
         break;
 
@@ -1286,7 +1286,7 @@ void mysteryCellEffect(int option,int pos){
         newPos = board[pos].piece->owner->startingLocation;
         log = canForceMove(pos,newPos);
         if(log>0){
-            printf("Piece%s teleported back to starting Position.\n",multiple);
+            printf("Color %s piece(s) %s teleported back to starting Position.\n",name,pieceName);
             forceMove(pos,newPos,log);
         }
         break;
@@ -1296,7 +1296,7 @@ void mysteryCellEffect(int option,int pos){
         newPos = board[pos].piece->owner->approachLocation;
         log = canForceMove(pos,newPos);
         if(log>0){
-            printf("Price%s teleported to player approach.\n",multiple);
+            printf("Color %s piece(s) %s teleported to player approach.\n",name,pieceName);
             forceMove(pos,newPos,log);
         }
         break;
@@ -1338,15 +1338,17 @@ int effectOption3(int pos){
     }else{
         rotation = &board[pos].piece->rotation;
     }
-
+    
     if(*rotation){
         int log = canForceMove(pos,kotuwa);
         if(log >0){
+            printf("piece(s) is moving counterclockwise direction. Teleporting To kotuwa from pita-Kotuwa");
             effectOption2(pos);
             forceMove(pos,kotuwa,log);
         }
         return 0;
     }else{
+        printf("pieces(s) is moving clockwise direction. has changed to moving counterclockwise");
         *rotation = counterClockwise;
         return 1;
     }
