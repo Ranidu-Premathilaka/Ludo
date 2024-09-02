@@ -97,11 +97,25 @@ This can be a balance between performance or memory usage since they seem to be 
 
 \subsection{Block Movement}
 
-Block movement all including eliminations are handled by the same functions as for single piece movements thus reducing repeated code and save space
+Block movement all including eliminations are handled by the same functions as for single piece movements thus reducing repeated code and save memory
 
 \subsection{Block Implementation}
 
 Even though block implementation can be done with static memory this requires to have unused variables if no blocks exists wasting memory. due to this and the fact that creating a block has a low probability on average thus i choose to dynamically allocate memory for only the required block when needed reducing memory usage.
+
+\subsection{Mystery cell duration implementation}
+
+There was two options in mind of development for this feature,
+\begin{itemize}
+    \item decreasing count every round from 4n to 4(n-1)(takes off effect)
+    \item storing the round count when the effect occurred
+\end{itemize}
+
+i came to the conclusion of picking the second option due to the reasons. The first option for each round we have to iterate through every piece and decrement by 1 if an effect exists while the second only you only have to check weather the effect is still valid for the current round reducing the time complexity of the requirement dramatically. Thus even though it needs an extra variable to store the effect occurrence round it outweighs the benefits in comparison. 
+
+\subsection{Home straight using a board structure}
+
+The way that the home straight is implemented is through using the same structure definition as the board. this can seem unnecessary due to the pieces not being able to make partial movements after entering the home straight. But The reason for my decision is that since creating a block on the home straight is deemed possible it's much more performance efficient to only check weather if the home straight cell has pieces and weather a block is needed to be created compared to iterating through the pieces to see weather a piece exits in the "about to land" cell. This also gives an added benefit of being able to use the same functions as used in the board movement for the home straight.
 
 \subsection{Time complexity of functions}
 
